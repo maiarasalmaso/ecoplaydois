@@ -18,7 +18,9 @@ const Register = () => {
       navigate('/');
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.error || 'Erro ao criar conta. Tente novamente.');
+      const backendError = err.response?.data?.error || 'Erro ao criar conta.';
+      const backendDetails = err.response?.data?.details || '';
+      setError(`${backendError} ${backendDetails}`.trim());
     }
   };
 
