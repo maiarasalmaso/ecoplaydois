@@ -33,7 +33,7 @@ router.post('/', async (req: Request, res: Response) => {
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Error creating user:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) });
     }
 });
 
