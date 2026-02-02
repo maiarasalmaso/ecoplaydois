@@ -17,7 +17,8 @@ const Register = () => {
       await register(fullName, email, password);
       navigate('/');
     } catch (err) {
-      setError('Erro ao criar conta. Tente novamente.');
+      console.error(err);
+      setError(err.response?.data?.error || 'Erro ao criar conta. Tente novamente.');
     }
   };
 
