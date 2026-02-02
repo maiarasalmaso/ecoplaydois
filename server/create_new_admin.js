@@ -1,8 +1,13 @@
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
+require('dotenv').config();
+
+const connectionString = process.env.DATABASE_URL;
+const isSupabase = connectionString && connectionString.includes('supabase');
 
 const pool = new Pool({
-    connectionString: 'postgres://admin:password@localhost:5433/ecoplay'
+    connectionString,
+    ssl: isSupabase ? { rejectUnauthorized: false } : undefined
 });
 
 async function createAdmin() {

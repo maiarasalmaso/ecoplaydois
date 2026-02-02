@@ -1,23 +1,15 @@
-# Quase lá! 🏁
+# Resolvendo Erro de Envio �️
 
-Eu já configurei o destino do código para: `https://github.com/maiarasalmaso/ecoplay.git`
+Ocorreu um erro porque o repositório `ecoplaydois` no GitHub **não está vazio** (provavelmente você marcou para criar com README ou License).
 
-Mas para salvar a versão inicial (fazer o *commit*), o Git **exige** que você se identifique no seu computador.
+Como queremos substituir o que está lá pelo seu projeto completo, você precisa forçar o envio.
 
-## Passo Único: Se Identificar
+## Comando para Corrigir
 
-Copie e rode estes dois comandos no seu terminal (substitua pelo seu email real do GitHub):
-
-```bash
-git config --global user.email "seu_email_do_github@exemplo.com"
-git config --global user.name "Maiara Salmaso"
-```
-
-## Depois disso:
+Rode este comando no terminal:
 
 ```bash
-git commit -m "Versão Inicial EcoPlay"
-git push -u origin main
+git push -u origin main --force
 ```
 
-*(Se o `git push` pedir senha, use seu Token de Acesso Pessoal do GitHub, não a senha da conta)*
+⚠️ *Isso vai substituir os arquivos que estão lá no GitHub pelos arquivos do seu computador.*
