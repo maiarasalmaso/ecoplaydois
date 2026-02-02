@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # Database Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: ecoplay_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ecoplay
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_v2:/var/lib/postgresql/data
+      - ./database/schema:/docker-entrypoint-initdb.d/01-schema
+      - ./database/seeds:/docker-entrypoint-initdb.d/02-seeds
+    networks:
+      - ecoplay_net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d ecoplay" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Backend Service
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: ecoplay_backend
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/ecoplay
+      # Add other env vars here or use env_file
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    networks:
+      - ecoplay_net
+
+  # Frontend Service
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecoplay_frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://backend:3000
+    depends_on:
+      - backend
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/server # Exclude server dir from frontend context to avoid confusion/loops if auto-reload watches too much
+    networks:
+      - ecoplay_net
+
+networks:
+  ecoplay_net:
+    driver: bridge
+
+volumes:
+  postgres_data_v2:
+
+

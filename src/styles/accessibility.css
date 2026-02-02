@@ -1,0 +1,22 @@
+/* src/styles/accessibility.css */
+/* High‑contrast mode – bright text on dark background */
+.high-contrast {
+    background-color: #000 !important;
+    color: #fff !important;
+}
+
+.high-contrast a {
+    color: #00ff7f !important;
+}
+
+/* Daltone (color‑blind) mode – adjust palette to be safe for protanopia/deuteranopia */
+.daltone {
+    filter: url('#daltone-filter');
+}
+
+/* Simple SVG filter for protanopia (red‑green) */
+svg#daltone-filter {
+    position: absolute;
+    width: 0;
+    height: 0;
+}

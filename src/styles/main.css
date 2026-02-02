@@ -1,0 +1,89 @@
+/* src/styles/main.css */
+:root {
+    /* Color palette – vibrant, high‑contrast */
+    --color-primary: #00ff7f;
+    /* neon green */
+    --color-bg: #0a0a0a;
+    /* dark background */
+    --color-bg-gradient: linear-gradient(135deg, #0a0a0a, #001f3f);
+    --color-text: #ffffff;
+    --color-accent: #ffea00;
+    /* bright yellow for highlights */
+}
+
+/* Theme classes */
+.theme-dark {
+    --color-primary: #00ff7f;
+    --color-bg: #0a0a0a;
+    --color-bg-gradient: linear-gradient(135deg, #0a0a0a, #001f3f);
+    --color-text: #ffffff;
+    --color-accent: #ffea00;
+}
+
+.theme-light {
+    --color-primary: #0066ff;
+    --color-bg: #f0f0f0;
+    --color-bg-gradient: linear-gradient(135deg, #f0f0f0, #c0e0ff);
+    --color-text: #000000;
+    --color-accent: #ff6600;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--color-bg-gradient);
+    font-family: 'Exo 2', sans-serif;
+    color: var(--color-text);
+    overflow: hidden;
+}
+
+#game-container {
+    width: 100%;
+    height: 100%;
+}
+
+button,
+.btn {
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 4px;
+    background: var(--color-primary);
+    color: var(--color-bg);
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.2s ease;
+}
+
+button:hover,
+.btn:hover {
+    background: var(--color-accent);
+    transform: scale(1.05);
+}
+
+/* High‑contrast overrides */
+.high-contrast {
+    --color-primary: #ffff00;
+    --color-bg: #000000;
+    --color-text: #ffffff;
+    --color-accent: #ff00ff;
+}
+
+/* Daltone filter – protanopia/deuteranopia safe */
+.daltone {
+    filter: url('#daltone-filter');
+}
+
+svg#daltone-filter {
+    position: absolute;
+    width: 0;
+    height: 0;
+}
+
+/* Touch target utility for mobile */
+.touch-target {
+    min-width: 44px;
+    min-height: 44px;
+}

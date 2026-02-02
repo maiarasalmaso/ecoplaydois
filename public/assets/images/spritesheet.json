@@ -1,0 +1,183 @@
+{
+    "frames": [
+        {
+            "filename": "sun",
+            "frame": {
+                "x": 50,
+                "y": 250,
+                "w": 200,
+                "h": 200
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 200,
+                "h": 200
+            },
+            "sourceSize": {
+                "w": 200,
+                "h": 200
+            }
+        },
+        {
+            "filename": "panel",
+            "frame": {
+                "x": 280,
+                "y": 290,
+                "w": 180,
+                "h": 140
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 180,
+                "h": 140
+            },
+            "sourceSize": {
+                "w": 180,
+                "h": 140
+            }
+        },
+        {
+            "filename": "turbine",
+            "frame": {
+                "x": 550,
+                "y": 230,
+                "w": 160,
+                "h": 200
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 160,
+                "h": 200
+            },
+            "sourceSize": {
+                "w": 160,
+                "h": 200
+            }
+        },
+        {
+            "filename": "drop",
+            "frame": {
+                "x": 780,
+                "y": 270,
+                "w": 130,
+                "h": 160
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 130,
+                "h": 160
+            },
+            "sourceSize": {
+                "w": 130,
+                "h": 160
+            }
+        },
+        {
+            "filename": "rock",
+            "frame": {
+                "x": 90,
+                "y": 580,
+                "w": 150,
+                "h": 120
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 150,
+                "h": 120
+            },
+            "sourceSize": {
+                "w": 150,
+                "h": 120
+            }
+        },
+        {
+            "filename": "city",
+            "frame": {
+                "x": 310,
+                "y": 520,
+                "w": 200,
+                "h": 180
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 200,
+                "h": 180
+            },
+            "sourceSize": {
+                "w": 200,
+                "h": 180
+            }
+        },
+        {
+            "filename": "play",
+            "frame": {
+                "x": 560,
+                "y": 540,
+                "w": 140,
+                "h": 140
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 140,
+                "h": 140
+            },
+            "sourceSize": {
+                "w": 140,
+                "h": 140
+            }
+        },
+        {
+            "filename": "settings",
+            "frame": {
+                "x": 780,
+                "y": 530,
+                "w": 140,
+                "h": 140
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 140,
+                "h": 140
+            },
+            "sourceSize": {
+                "w": 140,
+                "h": 140
+            }
+        }
+    ],
+    "meta": {
+        "app": "http://www.codeandweb.com/texturepacker",
+        "version": "1.0",
+        "image": "spritesheet.png",
+        "format": "RGBA8888",
+        "size": {
+            "w": 1024,
+            "h": 1024
+        },
+        "scale": "1"
+    }
+}

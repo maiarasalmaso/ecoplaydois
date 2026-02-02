@@ -1,0 +1,43 @@
+:root {
+  /* Variáveis de tema claro */
+  --theme-bg-primary: #ffffff;
+  --theme-bg-secondary: #f8fafc;
+  --theme-bg-tertiary: #f1f5f9;
+  --theme-text-primary: #1e293b;
+  --theme-text-secondary: #475569;
+  --theme-text-tertiary: #64748b;
+  --theme-border: #e2e8f0;
+  --theme-border-hover: #cbd5e1;
+  --theme-shadow: rgba(0, 0, 0, 0.1);
+  --theme-scrollbar-track: #f1f5f9;
+  --theme-scrollbar-thumb: #cbd5e1;
+  --theme-scrollbar-thumb-hover: #94a3b8;
+  --theme-backdrop: rgba(255, 255, 255, 0.8);
+  --theme-card-bg: #ffffff;
+  --theme-card-border: #e2e8f0;
+  --theme-input-bg: #ffffff;
+  --theme-input-border: #e2e8f0;
+  --theme-input-text: #1e293b;
+}
+
+:root[data-theme="dark"] {
+  /* Variáveis de tema escuro (padrão atual) */
+  --theme-bg-primary: #0f172a;
+  --theme-bg-secondary: #1e293b;
+  --theme-bg-tertiary: #334155;
+  --theme-text-primary: #f1f5f9;
+  --theme-text-secondary: #cbd5e1;
+  --theme-text-tertiary: #94a3b8;
+  --theme-border: #334155;
+  --theme-border-hover: #475569;
+  --theme-shadow: rgba(0, 0, 0, 0.3);
+  --theme-scrollbar-track: #1e293b;
+  --theme-scrollbar-thumb: #475569;
+  --theme-scrollbar-thumb-hover: #64748b;
+  --theme-backdrop: rgba(15, 23, 42, 0.8);
+  --theme-card-bg: #1e293b;
+  --theme-card-border: #334155;
+  --theme-input-bg: #1e293b;
+  --theme-input-border: #334155;
+  --theme-input-text: #f1f5f9;
+}

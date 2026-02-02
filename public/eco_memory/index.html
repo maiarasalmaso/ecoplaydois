@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoMemory: Energia Renovável</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="stats">
+            <span id="score">Pontos: 100</span>
+            <span id="turns">Turnos: 0/60</span>
+        </div>
+        <button id="mute-btn" aria-label="Silenciar som">🔊</button>
+    </header>
+
+    <main id="game-board" class="grid-container"></main>
+
+    <div id="modal-overlay" class="hidden">
+        <div id="modal-content">
+            <h2 id="modal-title"></h2>
+            <p id="modal-msg"></p>
+            <div id="modal-actions"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+{
+    "solar": {
+        "title": "Energia Solar",
+        "intro": [
+            "Bem-vindo, Eco Guardian! Sua primeira missão é aproveitar o poder do Sol.",
+            "Painéis solares convertem a luz do sol diretamente em eletricidade.",
+            "Arraste o painel para a posição mais ensolarada para gerar energia!"
+        ],
+        "tips": [
+            "Fique de olho na posição do sol.",
+            "Nuvens podem reduzir a eficiência."
+        ],
+        "quiz": {
+            "question": "O que os painéis solares usam para gerar energia?",
+            "options": [
+                "Calor",
+                "Luz",
+                "Vento",
+                "Som"
+            ],
+            "correct": 1,
+            "explanation": "Correto! As células fotovoltaicas convertem fótons de LUZ em eletricidade."
+        }
+    },
+    "wind": {
+        "title": "Energia Eólica",
+        "intro": [
+            "Excelente trabalho com o sol! Agora, vamos capturar o vento.",
+            "As turbinas eólicas usam a energia cinética do ar em movimento.",
+            "Posicione a turbina onde o vento é mais forte!"
+        ],
+        "quiz": {
+            "question": "Qual é a melhor localização para uma turbina eólica?",
+            "options": [
+                "Um vale fechado",
+                "Dentro de uma floresta",
+                "Topo de uma colina aberta",
+                "Debaixo d'água"
+            ],
+            "correct": 2,
+            "explanation": "Exato! Locais altos e abertos têm ventos mais fortes e constantes."
+        }
+    },
+    "hydro": {
+        "title": "Energia Hidrelétrica",
+        "intro": [
+            "A água em movimento tem uma força incrível via gravidade.",
+            "Represas ou fluxo de rios podem girar turbinas poderosas.",
+            "Gerencie o fluxo de água para manter a luz acesa!"
+        ],
+        "quiz": {
+            "question": "A energia hidrelétrica depende principalmente de:",
+            "options": [
+                "Ciclo da gravidade",
+                "Queima de combustível",
+                "Reações químicas",
+                "Vibração do solo"
+            ],
+            "correct": 0,
+            "explanation": "Isso mesmo! A gravidade puxa a água para baixo, girando as turbinas."
+        }
+    },
+    "geo": {
+        "title": "Energia Geotérmica",
+        "intro": [
+            "O núcleo da Terra é extremamente quente.",
+            "Podemos usar esse calor (vapor) para gerar energia limpa 24h por dia.",
+            "Encontre o ponto quente para extrair energia!"
+        ],
+        "quiz": {
+            "question": "Qual é uma grande vantagem da energia geotérmica?",
+            "options": [
+                "Funciona apenas de dia",
+                "Depende do vento",
+                "Disponível 24/7",
+                "Causa muita poluição"
+            ],
+            "correct": 2,
+            "explanation": "Perfeito! Ao contrário do sol e vento, o calor da Terra é constante."
+        }
+    },
+    "city": {
+        "title": "Cidade Sustentável",
+        "intro": [
+            "Você dominou os quatro elementos!",
+            "Agora, gerencie a energia de toda a cidade.",
+            "Mantenha o equilíbrio entre produção e consumo para vencer."
+        ],
+        "quiz": {
+            "question": "O que é eficiência energética?",
+            "options": [
+                "Usar mais energia",
+                "Fazer o mesmo com menos energia",
+                "Desligar tudo para sempre",
+                "Gerar energia infinita"
+            ],
+            "correct": 1,
+            "explanation": "Sim! Eficiência é evitar desperdício e maximizar o uso."
+        }
+    }
+}
