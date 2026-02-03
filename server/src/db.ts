@@ -4,12 +4,16 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const isProduction = process.env.NODE_ENV === 'production';
-const connectionString = process.env.DATABASE_URL;
+// Vercel Postgres/Neon uses POSTGRES_URL, Supabase/Render uses DATABASE_URL
+const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+
 const isSupabase = connectionString?.includes('supabase');
+const isNeon = connectionString?.includes('neon.tech');
 
 const pool = new Pool({
     connectionString,
-    ssl: (isProduction || isSupabase) ? { rejectUnauthorized: false } : undefined,
+    // Neon and Supabase both require SSL in production
+    ssl: (isProduction || isSupabase || isNeon) ? { rejectUnauthorized: false } : undefined,
 });
 
 pool.on('connect', () => {
