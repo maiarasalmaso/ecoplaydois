@@ -23,9 +23,14 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(morgan('dev'));
-app.use(express.json());
+// Middleware to debug Vercel paths
+app.use((req, res, next) => {
+    console.log(`[API Request] ${req.method} ${req.originalUrl}`);
+    next();
+});
 
-// Routes - adjusted paths for Vercel if needed, but standard should work
+// Routes - adjusted paths for Vercel
+// We mount on /api explicitly.
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/games', gamesRouter);
