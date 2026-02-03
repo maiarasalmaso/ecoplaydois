@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+    // In production (Vercel), we use relative path '/api' to access Serverless Functions
+    // In development, we use localhost:3000 or VITE_API_URL if set
+    baseURL: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '/api'),
 });
 
 api.interceptors.request.use(async (config) => {
