@@ -10,6 +10,7 @@ import gamesRouter from './routes/games';
 import feedbackRouter from './routes/feedback';
 import quizRouter from './routes/quiz';
 import progressRouter from './routes/progress';
+import debugRouter from './routes/debug';
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use('/api/games', gamesRouter);
 app.use('/api/feedback', feedbackRouter);
 app.use('/api/quiz', quizRouter);
 app.use('/api/progress', progressRouter);
+app.use('/api/debug-db', debugRouter);
 
 // Health check
 app.get('/api/health', async (req, res) => {

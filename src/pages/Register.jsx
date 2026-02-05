@@ -18,9 +18,26 @@ const Register = () => {
       navigate('/');
     } catch (err) {
       console.error(err);
-      const backendError = err.response?.data?.error || 'Erro ao criar conta.';
-      const backendDetails = err.response?.data?.details || '';
-      setError(`${backendError} ${backendDetails}`.trim());
+      let errorMsg = 'Erro ao criar conta.';
+
+      const responseData = err.response?.data;
+      if (responseData) {
+        if (responseData.error) {
+          if (typeof responseData.error === 'object') {
+            errorMsg = responseData.error.message || JSON.stringify(responseData.error);
+          } else {
+            errorMsg = String(responseData.error);
+          }
+        }
+
+        if (responseData.details) {
+          errorMsg += ` ${responseData.details}`;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
     }
   };
 

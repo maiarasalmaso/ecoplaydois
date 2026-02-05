@@ -12,6 +12,7 @@ import { getLevel } from '@/utils/gamification';
 import { playNavigation, playClick, playStart } from '@/utils/soundEffects';
 import TiltContainer from '@/components/ui/TiltContainer';
 import CharacterSelector from '@/components/user/CharacterSelector';
+import DbStatus from '@/components/ui/DbStatus';
 
 const Header = () => {
   const location = useLocation();
@@ -84,6 +85,8 @@ const Header = () => {
           <div className="flex items-center justify-between py-4 gap-3">
             <div className="w-1/3 flex items-center gap-2">
               {/* Server Status Indicator (Minimal Header) */}
+              <DbStatus />
+              {/* Theme Toggle minimal header */}
 
             </div>
             <Link to="/" className="flex items-center gap-3 group relative">
@@ -173,7 +176,7 @@ const Header = () => {
           <div className="flex items-center gap-4">
             <ThemeToggle className="shrink-0" />
             {/* Server Status Indicator */}
-
+            {user && <DbStatus />}
 
             {user ? (
               <div className="flex items-center gap-4">

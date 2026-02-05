@@ -1,29 +1,34 @@
-import { Pool } from 'pg';
+import { neon } from '@neondatabase/serverless';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const isProduction = process.env.NODE_ENV === 'production';
-// Vercel Postgres/Neon uses POSTGRES_URL, Supabase/Render uses DATABASE_URL
-const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+// Lazy initialization wrapper
+const getSql = () => {
+    const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
-const isSupabase = connectionString?.includes('supabase');
-const isNeon = connectionString?.includes('neon.tech');
+    if (!connectionString) {
+        throw new Error("DATABASE_URL environment variable is not defined");
+    }
 
-const pool = new Pool({
-    connectionString,
-    // Neon and Supabase both require SSL in production
-    ssl: (isProduction || isSupabase || isNeon) ? { rejectUnauthorized: false } : undefined,
-});
+    return neon(connectionString);
+};
 
-pool.on('connect', () => {
-    console.log('Connected to the Database');
-});
+export const query = async (text: string, params?: any[]) => {
+    try {
+        const sql = getSql();
+        const start = Date.now();
 
-pool.on('error', (err) => {
-    console.error('Unexpected error on idle client', err);
-    process.exit(-1);
-});
+        // Neon driver supports parameterized queries directly: sql(query, params)
+        // Adjust for template literal usage if needed by library versions, but standard usage is function call
+        const rows = await sql(text, params || []);
 
-export const query = (text: string, params?: any[]) => pool.query(text, params);
-export default pool;
+        return { rows, rowCount: rows.length };
+    } catch (error) {
+        console.error('Database Error:', error);
+        // Throw error to be caught by route handler
+        throw error;
+    }
+};
+
+export default { query };

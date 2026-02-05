@@ -46,7 +46,20 @@ const Login = () => {
       navigate('/');
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.error || err.message || 'Falha no login');
+      let errorMsg = 'Falha no login';
+
+      if (err.response?.data?.error) {
+        const backendErr = err.response.data.error;
+        if (typeof backendErr === 'object') {
+          errorMsg = backendErr.message || JSON.stringify(backendErr);
+        } else {
+          errorMsg = String(backendErr);
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
     } finally {
       setSubmitting(false);
     }
