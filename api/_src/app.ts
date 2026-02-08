@@ -11,6 +11,7 @@ import feedbackRouter from './routes/feedback.js';
 import quizRouter from './routes/quiz.js';
 import progressRouter from './routes/progress.js';
 import debugRouter from './routes/debug.js';
+import ecoBotRouter from './routes/eco-bot.js';
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ app.use('/api/games', gamesRouter);
 app.use('/api/feedback', feedbackRouter);
 app.use('/api/quiz', quizRouter);
 app.use('/api/progress', progressRouter);
+app.use('/api/eco-bot', ecoBotRouter);
 app.use('/api/debug-db', debugRouter);
 
 // Health check
