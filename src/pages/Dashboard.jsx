@@ -22,6 +22,10 @@ import {
   Unlock,
   HelpCircle,
   Coins,
+  Cloud,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useGameState } from '../context/GameStateContext';
@@ -328,7 +332,11 @@ const getAccent = (key, isLight) => {
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
-  const { score, ecoCredits, badges = [], energy, MODULE_STATS, modules, upgradeModule, calculateProduction, setModules, convertEnergyToXp } = useGameState();
+  const {
+    score, ecoCredits, badges = [], energy, MODULE_STATS, modules,
+    upgradeModule, calculateProduction, setModules, convertEnergyToXp,
+    syncStatus, refreshGameState
+  } = useGameState();
   const { theme } = useTheme();
   const isLight = theme === 'light';
   const [showAvatarModal, setShowAvatarModal] = useState(false);
@@ -366,7 +374,7 @@ const Dashboard = () => {
         <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-theme-bg-secondary/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-theme-border mb-8 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden"
+          className="bg-theme-bg-secondary/80 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl border border-theme-border mb-8 flex flex-col md:flex-row items-center gap-6 sm:gap-8 relative overflow-hidden"
         >
           {/* Decorative Blobs - Removed for cleaner look */}
 
@@ -432,6 +440,32 @@ const Dashboard = () => {
                   <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent h-1/2 rounded-full" />
                 </motion.div>
               </motion.div>
+            </div>
+
+            {/* Sync Status & Button */}
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                onClick={refreshGameState}
+                disabled={syncStatus === 'saving'}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-theme-bg-primary hover:bg-theme-bg-tertiary border border-theme-border transition-all disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${syncStatus === 'saving' ? 'animate-spin' : ''}`} />
+                {syncStatus === 'saving' ? 'Sincronizando...' : 'Sincronizar'}
+              </button>
+              <div className="flex items-center gap-1.5 text-xs">
+                {syncStatus === 'synced' && (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    <span className="text-theme-text-tertiary">Sincronizado</span>
+                  </>
+                )}
+                {syncStatus === 'error' && (
+                  <>
+                    <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                    <span className="text-red-500">Erro ao sincronizar</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -581,7 +615,7 @@ const Dashboard = () => {
             )}
           </section>
 
-          <section className="glass-card rounded-3xl p-8 shadow-2xl">
+          <section className="glass-card rounded-3xl p-6 sm:p-8 shadow-2xl">
             {/* Base Header with Energy Stats */}
             {/* Base Header with Energy Stats */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -616,6 +650,21 @@ const Dashboard = () => {
                     <span className="block text-xs font-mono uppercase text-theme-text-tertiary">Produção</span>
                     <span className="font-display font-bold text-xl text-green-400">+{calculateProduction()}/s</span>
                   </div>
+                </div>
+                <div className="w-px h-8 bg-theme-border"></div>
+
+                {/* Status de Sincronização Discreto */}
+                <div className="flex items-center gap-2 px-3" title={`Sincronização: ${syncStatus}`}>
+                  {syncStatus === 'saving' ? (
+                    <RefreshCw className="w-4 h-4 text-theme-text-tertiary animate-spin" />
+                  ) : syncStatus === 'error' ? (
+                    <AlertCircle className="w-4 h-4 text-red-500" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4 text-green-500/50" />
+                  )}
+                  <span className="text-[10px] font-mono uppercase text-theme-text-tertiary hidden sm:block">
+                    {syncStatus === 'saving' ? 'Salvando...' : syncStatus === 'error' ? 'Erro' : 'Sincronizado'}
+                  </span>
                 </div>
               </div>
             </div>

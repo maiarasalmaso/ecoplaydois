@@ -1,1 +1,16 @@
-{"projectId":"prj_JunpPBm1dt1TfHFCd2DKGyng7LrD","orgId":"team_QnOqzjWQo4p8t3Ax5bxiHBwY","projectName":"ecoplayeedu"}
+{
+  "projectId": "prj_JunpPBm1dt1TfHFCd2DKGyng7LrD",
+  "orgId": "team_QnOqzjWQo4p8t3Ax5bxiHBwY",
+  "projectName": "ecoplayeedu",
+  "settings": {
+    "createdAt": 1769992114047,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}

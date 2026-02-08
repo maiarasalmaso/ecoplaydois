@@ -10,36 +10,57 @@ import AmbientSoundPlayer from '@/components/AmbientSoundPlayer';
 import AnimatedBackground from '@/components/layout/AnimatedBackground';
 import GamesHub from '@/pages/GamesHub';
 
-const Home = lazy(() => import('@/pages/Home'));
-const Login = lazy(() => import('@/pages/Login'));
-const Register = lazy(() => import('@/pages/Register'));
-const AdminLogin = lazy(() => import('@/pages/admin/AdminLogin'));
-const AdminPanel = lazy(() => import('@/pages/admin/AdminPanel'));
-const UsersList = lazy(() => import('@/pages/admin/UsersList'));
-const Dashboard = lazy(() => import('@/pages/Dashboard'));
-const EcoSudoku = lazy(() => import('@/pages/games/EcoSudoku'));
-const EcoQuiz = lazy(() => import('@/pages/games/EcoQuiz'));
-const EcoMemory = lazy(() => import('@/pages/games/EcoMemory'));
-const EcoSwipe = lazy(() => import('@/pages/games/EcoSwipe'));
-const EcoMath = lazy(() => import('@/pages/games/EcoMath'));
-const EcoSnake = lazy(() => import('@/pages/games/EcoSnake'));
-const EcoPlatformer = lazy(() => import('@/pages/games/EcoPlatformer'));
-const EcoPassaRepassa = lazy(() => import('@/pages/games/EcoPassaRepassa'));
-const HangmanGame = lazy(() => import('@/pages/games/HangmanGame'));
-const EcoGuardian = lazy(() => import('@/pages/games/EcoGuardian'));
-const EcoWordSearch = lazy(() => import('@/pages/games/EcoWordSearch'));
+// Utility to retry lazy imports if chunk load fails (e.g., after a new deployment)
+const lazyRetry = (componentImport) => {
+  return lazy(async () => {
+    try {
+      const component = await componentImport();
+      return component;
+    } catch (error) {
+      // Check for chunk load error pattern
+      if (error.message.includes('Failed to fetch dynamically imported module') ||
+        error.message.includes('Importing a module script failed')) {
+        // Reload page to fetch the new version
+        console.warn('Chunk load failed, reloading page to get latest version...', error);
+        window.location.reload();
+        // Return a temporary placeholder to prevent React crash before reload happens
+        return { default: () => <div className="min-h-screen flex items-center justify-center">Atualizando aplicação...</div> };
+      }
+      throw error;
+    }
+  });
+};
 
-const Leaderboard = lazy(() => import('@/pages/Leaderboard'));
+const Home = lazyRetry(() => import('@/pages/Home'));
+const Login = lazyRetry(() => import('@/pages/Login'));
+const Register = lazyRetry(() => import('@/pages/Register'));
+const AdminLogin = lazyRetry(() => import('@/pages/admin/AdminLogin'));
+const AdminPanel = lazyRetry(() => import('@/pages/admin/AdminPanel'));
+const UsersList = lazyRetry(() => import('@/pages/admin/UsersList'));
+const Dashboard = lazyRetry(() => import('@/pages/Dashboard'));
+const EcoSudoku = lazyRetry(() => import('@/pages/games/EcoSudoku'));
+const EcoQuiz = lazyRetry(() => import('@/pages/games/EcoQuiz'));
+const EcoMemory = lazyRetry(() => import('@/pages/games/EcoMemory'));
+const EcoSwipe = lazyRetry(() => import('@/pages/games/EcoSwipe'));
+const EcoMath = lazyRetry(() => import('@/pages/games/EcoMath'));
+const EcoSnake = lazyRetry(() => import('@/pages/games/EcoSnake'));
+const EcoPlatformer = lazyRetry(() => import('@/pages/games/EcoPlatformer'));
+const EcoPassaRepassa = lazyRetry(() => import('@/pages/games/EcoPassaRepassa'));
+const HangmanGame = lazyRetry(() => import('@/pages/games/HangmanGame'));
+const EcoGuardian = lazyRetry(() => import('@/pages/games/EcoGuardian'));
+const EcoWordSearch = lazyRetry(() => import('@/pages/games/EcoWordSearch'));
+
+const Leaderboard = lazyRetry(() => import('@/pages/Leaderboard'));
 
 
-const EcoBot = lazy(() => import('@/pages/games/EcoBot'));
-const About = lazy(() => import('@/pages/About'));
-const Privacy = lazy(() => import('@/pages/Privacy'));
-const LightDemo = lazy(() => import('@/pages/LightDemo'));
-const SaibaMais = lazy(() => import('@/pages/SaibaMais'));
-const Feedback = lazy(() => import('@/pages/Feedback'));
-const Setup = lazy(() => import('@/pages/Setup'));
-const NotFound = lazy(() => import('@/pages/NotFound'));
+const EcoBot = lazyRetry(() => import('@/pages/games/EcoBot'));
+const About = lazyRetry(() => import('@/pages/About'));
+const Privacy = lazyRetry(() => import('@/pages/Privacy'));
+const LightDemo = lazyRetry(() => import('@/pages/LightDemo'));
+const SaibaMais = lazyRetry(() => import('@/pages/SaibaMais'));
+const Feedback = lazyRetry(() => import('@/pages/Feedback'));
+const Setup = lazyRetry(() => import('@/pages/Setup'));
+const NotFound = lazyRetry(() => import('@/pages/NotFound'));
 
 const RouteFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-theme-bg-primary">

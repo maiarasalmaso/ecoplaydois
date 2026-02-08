@@ -5,7 +5,7 @@ const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(localStorage.getItem('ecoplay_token'));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     const response = await api.post('/auth/login', { email, password });
     const { token, user } = response.data;
 
-    localStorage.setItem('token', token);
+    localStorage.setItem('ecoplay_token', token);
     setToken(token);
     setUser(user);
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -47,8 +47,19 @@ export const AuthProvider = ({ children }) => {
     await login(email, password);
   };
 
+  const sync = async (username) => {
+    const response = await api.post('/auth/sync', { username });
+    const { token, user } = response.data;
+
+    localStorage.setItem('ecoplay_token', token);
+    setToken(token);
+    setUser(user);
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    return user;
+  };
+
   const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('ecoplay_token');
     setToken(null);
     setUser(null);
     delete api.defaults.headers.common['Authorization'];
@@ -66,7 +77,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!user, user, login, register, logout, updateProfile, loading }}>
+    <AuthContext.Provider value={{ isAuthenticated: !!user, user, login, register, sync, logout, updateProfile, loading }}>
       {children}
     </AuthContext.Provider>
   );

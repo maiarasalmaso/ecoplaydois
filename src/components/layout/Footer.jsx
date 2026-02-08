@@ -5,6 +5,7 @@ import { generateEcoTip } from '../../services/gemini';
 import { playHover, playClick } from '@/utils/soundEffects';
 
 import { motion } from 'framer-motion';
+import DbStatus from '@/components/ui/DbStatus';
 
 const Footer = () => {
   const [ecoTip, setEcoTip] = useState(null);
@@ -129,15 +130,24 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-theme-border/60 mt-8 pt-6 text-center text-sm flex items-center justify-center gap-1 text-theme-text-tertiary">
-          <span>Feito com</span>
-          <motion.div
-            animate={{ scale: [1, 1.25, 1] }}
-            transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.5 }}
-          >
-            <Heart className="w-4 h-4 text-red-500 fill-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
-          </motion.div>
-          <span>para o futuro do nosso planeta.</span>
+        <div className="border-t border-theme-border/60 mt-8 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-theme-text-tertiary">
+          <div className="flex items-center gap-1">
+            <span>Feito com</span>
+            <motion.div
+              animate={{ scale: [1, 1.25, 1] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.5 }}
+            >
+              <Heart className="w-4 h-4 text-red-500 fill-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+            </motion.div>
+            <span>para o futuro do nosso planeta.</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <DbStatus />
+            <div className="text-[10px] opacity-100 font-mono">
+              &copy; {new Date().getFullYear()} EcoPlay v2.0
+            </div>
+          </div>
         </div>
       </div>
     </footer >

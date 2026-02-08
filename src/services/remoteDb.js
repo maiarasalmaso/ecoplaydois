@@ -285,15 +285,20 @@ const apiFetch = async (endpoint, options = {}, retries = 2, backoff = 300) => {
   const token = localStorage.getItem('ecoplay_token');
   const headers = {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {})
   };
 
   const baseUrl = import.meta.env.VITE_API_URL || '';
-  const url = `${baseUrl}${endpoint}`;
+  // Add cache-buster query param for mobile browsers
+  const cacheBuster = `_t=${Date.now()}`;
+  const separator = endpoint.includes('?') ? '&' : '?';
+  const url = `${baseUrl}${endpoint}${separator}${cacheBuster}`;
 
   try {
-    const res = await fetch(url, { ...options, headers });
+    const res = await fetch(url, { ...options, headers, cache: 'no-store' });
 
     // 🚨 Authentication Validations
     if (res.status === 401) {
@@ -358,14 +363,14 @@ const providers = {
       const token = localStorage.getItem('ecoplay_token');
       if (!token) return { enabled: true, session: null };
       try {
-        const user = await apiFetch('/auth/me');
+        const user = await apiFetch('/api/auth/me');
         return { enabled: true, session: { access_token: token, user } };
       } catch {
         return { enabled: true, session: null };
       }
     },
     signIn: async ({ email, password }) => {
-      const data = await apiFetch('/auth/login', {
+      const data = await apiFetch('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password })
       });
@@ -376,7 +381,7 @@ const providers = {
       return { enabled: true, session: null, user: null };
     },
     signUp: async ({ email, password, name }) => {
-      await apiFetch('/users', {
+      await apiFetch('/api/users', {
         method: 'POST',
         body: JSON.stringify({ email, password, full_name: name })
       });
@@ -398,7 +403,7 @@ const providers = {
     registerProfile: async () => ({ enabled: true }),
 
     getProgress: async (localUserId) => {
-      const data = await apiFetch('/progress');
+      const data = await apiFetch('/api/progress');
       if (!data) return null;
       return {
         score: data.score,
@@ -420,22 +425,24 @@ const providers = {
         last_daily_xp_date: progress.lastDailyXpDate,
         unclaimed_rewards: progress.unclaimedRewards
       };
-      await apiFetch('/progress', {
+      // 3. Persistence 'Blindada' (KeepAlive)
+      await apiFetch('/api/progress', {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        keepalive: true
       });
       return { enabled: true };
     },
     upsertFeedback: async (response) => {
       const payload = feedbackToRow(response);
-      await apiFetch('/feedback', {
+      await apiFetch('/api/feedback', {
         method: 'POST',
         body: JSON.stringify(payload)
       });
       return { enabled: true };
     },
     getLeaderboard: async () => {
-      const data = await apiFetch('/users/leaderboard');
+      const data = await apiFetch('/api/users/leaderboard');
       // Adapting to match the frontend expectations if needed
       // Frontend expects: [{ id, name, xp }]
       // Backend returns: [{ id, full_name, score, avatar }]

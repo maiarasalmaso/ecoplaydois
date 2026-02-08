@@ -1,0 +1,159 @@
+import { Router, Response } from 'express';
+import { query } from '../db.js';
+import { withTransaction } from '../transaction.js';
+import { authenticateToken, AuthRequest } from '../middleware/auth.js';
+
+import { calculateProduction } from '../utils/gameRules.js';
+
+const router = Router();
+
+// Get Progress
+router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
+    // 1. Kill Zombie Cache
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    try {
+        const userId = req.user.userId;
+        console.log(`[API] Fetching progress for user ${userId}...`);
+        const result = await query('SELECT * FROM progress WHERE local_user_id = $1', [userId]);
+
+        if (result.rows.length === 0) {
+            console.log(`[API] No progress found for user ${userId}`);
+            return res.json(null);
+        }
+
+        const row = result.rows[0];
+
+        // 2. Server-side Offline Calculation (Anti-Cheat)
+        // We rely on server timestamp 'updated_at' instead of client trust
+        const lastUpdate = new Date(row.updated_at).getTime();
+        const now = Date.now();
+        const secondsOffline = Math.max(0, Math.floor((now - lastUpdate) / 1000));
+
+        if (secondsOffline > 10) { // Only calculate if significant time passed
+            const savedModules = row.stats?.saved_modules || {};
+            const productionPerSec = calculateProduction(savedModules);
+
+            if (productionPerSec > 0) {
+                const earnedEnergy = productionPerSec * secondsOffline;
+                const earnedCredits = Math.floor(earnedEnergy * 0.1); // 10% rate
+
+                // Update the response object (not DB yet, client will sync back)
+                // We use the new dedicated columns preferentially
+                const currentEnergy = Number(row.energy || row.stats?.saved_energy || 0);
+                const currentCredits = Number(row.eco_credits || row.stats?.saved_credits || 0);
+
+                row.energy = currentEnergy + earnedEnergy;
+                row.eco_credits = currentCredits + earnedCredits;
+
+                // Update the stats JSON too for compatibility with older frontends
+                if (row.stats) {
+                    row.stats.saved_energy = row.energy;
+                    row.stats.saved_credits = row.eco_credits;
+                }
+
+                console.log(`[API] Server calculated offline gains for user ${userId}: +${earnedEnergy} Energy (Offline for ${secondsOffline}s)`);
+            }
+        }
+
+        console.log(`[API] Progress found and returning for user ${userId}`);
+        res.json(row);
+    } catch (error) {
+        console.error('Error fetching progress:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Upsert Progress
+// Upsert Progress (Transactional & Idempotent)
+router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
+    return withTransaction(req, res, async (client) => {
+        const userId = req.user.userId;
+        const {
+            score,
+            badges,
+            badge_unlocks,
+            stats,
+            completed_levels,
+            last_daily_xp_date,
+            unclaimed_rewards,
+            version // Client must send the version it has
+        } = req.body;
+
+        const energy = Number(stats?.saved_energy) || 0;
+        const ecoCredits = Number(stats?.saved_credits) || 0;
+
+        console.log(`[API] Processing progress save for user ${userId} (ver: ${version || '?'})...`);
+
+        // 1. Check for current version to prevent conflicts (Optimistic Locking)
+        // We use FOR UPDATE to lock the row if it exists, ensuring serialization for this user.
+        const currentRes = await client.query(
+            'SELECT version FROM progress WHERE local_user_id = $1 FOR UPDATE',
+            [userId]
+        );
+
+        if (currentRes.rows.length > 0) {
+            const currentVersion = currentRes.rows[0].version;
+
+            // If client sent a version, strictly check it.
+            // If client didn't send version, we might allow overwrite OR fail. 
+            // Given "Consistência Forte", we should assume strictness, but for migration safety:
+            if (version !== undefined && version !== null && version !== currentVersion) {
+                console.warn(`[API] Version Mismatch for user ${userId}. Client: ${version}, DB: ${currentVersion}`);
+                throw new Error('Version Mismatch');
+            }
+        }
+
+        // 2. Upsert Logic
+        // We use INSERT ... ON CONFLICT just in case, but since we locked above, 
+        // the only race is if row didn't exist and two inserts happened.
+        // Uniquely, the SQL Trigger `trg_progress_version` will auto-increment version on UPDATE.
+        const queryText = `
+            INSERT INTO progress (
+                local_user_id, score, badges, badge_unlocks, stats, 
+                completed_levels, last_daily_xp_date, unclaimed_rewards, updated_at,
+                energy, eco_credits, version
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, 1)
+            ON CONFLICT (local_user_id) DO UPDATE SET
+                score = EXCLUDED.score,
+                badges = EXCLUDED.badges,
+                badge_unlocks = EXCLUDED.badge_unlocks,
+                stats = EXCLUDED.stats,
+                completed_levels = EXCLUDED.completed_levels,
+                last_daily_xp_date = EXCLUDED.last_daily_xp_date,
+                unclaimed_rewards = EXCLUDED.unclaimed_rewards,
+                updated_at = NOW(),
+                energy = EXCLUDED.energy,
+                eco_credits = EXCLUDED.eco_credits
+                -- version is auto-incremented by trigger
+            RETURNING *
+        `;
+
+        const values = [
+            userId,
+            score || 0,
+            badges || [],
+            badge_unlocks || {},
+            stats || {},
+            completed_levels || {},
+            last_daily_xp_date || null,
+            unclaimed_rewards || [],
+            energy,
+            ecoCredits
+        ];
+
+        const result = await client.query(queryText, values);
+
+        // 3. Sync User Score (User Table) - Atomic with this transaction
+        await client.query('UPDATE users SET score = $1 WHERE id = $2', [score || 0, userId]);
+
+        console.log(`[API] Progress saved successfully for user ${userId} (New Version: ${result.rows[0].version})`);
+
+        return { status: 200, data: result.rows[0] };
+    });
+});
+
+export default router;

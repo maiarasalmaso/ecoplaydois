@@ -215,7 +215,7 @@ const AdminLogin = () => {
     try {
       await authLogin(values.login, values.password);
 
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('ecoplay_token');
       if (token) {
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');

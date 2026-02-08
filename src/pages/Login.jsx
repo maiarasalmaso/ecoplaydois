@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { KeyRound, Lock, LogIn, Leaf, ArrowRight } from 'lucide-react';
+import { KeyRound, Lock, Leaf, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 import { useTheme } from '@/context/ThemeContext';
 
@@ -28,6 +28,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -43,7 +44,8 @@ const Login = () => {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate('/');
+      setSuccess(true);
+      setTimeout(() => navigate('/'), 1000);
     } catch (err) {
       console.error(err);
       let errorMsg = 'Falha no login';
@@ -69,7 +71,7 @@ const Login = () => {
 
   return (
     <div
-      className="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-y-auto supports-[min-height:100dvh]:min-h-[100dvh]"
       style={{
         '--login-accent': accent.color,
         '--login-accent-2': accent.colorAlt,
@@ -79,14 +81,13 @@ const Login = () => {
         '--login-contrast': contrast,
       }}
     >
-
-
       <MotionDiv
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="max-w-md w-full space-y-8 bg-theme-card-bg/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-theme-border relative z-10"
       >
+        {/* Header */}
         <div className="text-center">
           <div
             className="mx-auto h-16 w-16 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-2 mb-6"
@@ -98,89 +99,103 @@ const Login = () => {
             <Leaf className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-display font-bold text-theme-text-primary tracking-wide">EcoPlay</h1>
-          <p className="mt-2 text-sm text-theme-text-tertiary font-mono">Entre para salvar o futuro.</p>
+          <p className="mt-2 text-sm text-theme-text-tertiary font-mono uppercase tracking-tighter">Login</p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <MotionDiv
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg text-sm text-center font-medium flex items-center justify-center gap-2"
-              role="alert"
-            >
-              <Lock className="w-4 h-4" />
-              <span>{error}</span>
-            </MotionDiv>
-          )}
-
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <label htmlFor="email-address" className="text-sm font-semibold text-theme-text-secondary">
-                Email
-              </label>
-              <div className="relative group">
-                <KeyRound className="absolute left-3 top-3.5 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5" />
-                <input
-                  id="email-address"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-3 bg-theme-input-bg border border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium"
-                  placeholder="Seu email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label htmlFor="password" className="text-sm font-semibold text-theme-text-secondary">
-                Senha
-              </label>
-              <div className="relative group">
-                <Lock className="absolute left-3 top-3.5 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5" />
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-3 bg-theme-input-bg border border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium"
-                  placeholder="Sua senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-slate-900 bg-[color:var(--login-accent)] hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[color:var(--login-accent)] transition-all shadow-lg hover:shadow-[0_0_20px_var(--login-accent-glow)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                <LogIn className="h-5 w-5 text-slate-900 group-hover:brightness-110 transition-colors" />
-              </span>
-              {submitting ? 'ENTRANDO...' : 'ENTRAR'}
-            </button>
-          </div>
-        </form>
-
-        <div className="text-center border-t border-theme-border pt-6 mt-6">
-          <p className="text-sm text-theme-text-tertiary mb-3">
-            Ainda não tem uma conta?
-          </p>
-          <Link
-            to="/register"
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-orange-600 dark:text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 hover:border-orange-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/10 hover:-translate-y-0.5 group"
+        {/* Success State */}
+        {success ? (
+          <MotionDiv
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="py-8 text-center"
           >
-            Criar Nova Conta <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+            </div>
+            <h3 className="text-lg font-bold text-theme-text-primary mb-2">Conectado!</h3>
+            <p className="text-sm text-theme-text-secondary">Redirecionando...</p>
+          </MotionDiv>
+        ) : (
+          <>
+            {/* Login Form */}
+            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+              {error && (
+                <MotionDiv
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg text-sm text-center font-medium flex items-center justify-center gap-2"
+                  role="alert"
+                >
+                  <Lock className="w-4 h-4" />
+                  <span>{error}</span>
+                </MotionDiv>
+              )}
+
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="email-address" className="text-sm font-semibold text-theme-text-secondary">
+                    Email
+                  </label>
+                  <div className="relative group">
+                    <KeyRound className="absolute left-3 top-3.5 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5" />
+                    <input
+                      id="email-address"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-3 bg-theme-input-bg border border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium"
+                      placeholder="Seu email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="password" className="text-sm font-semibold text-theme-text-secondary">
+                    Senha
+                  </label>
+                  <div className="relative group">
+                    <Lock className="absolute left-3 top-3.5 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5" />
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-3 bg-theme-input-bg border border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium"
+                      placeholder="Sua senha"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-slate-900 bg-[color:var(--login-accent)] hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[color:var(--login-accent)] transition-all shadow-lg hover:shadow-[0_0_20px_var(--login-accent-glow)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'ENTRANDO...' : 'ENTRAR'}
+              </button>
+            </form>
+
+            {/* Register Link */}
+            <div className="text-center border-t border-theme-border pt-6 mt-6">
+              <p className="text-xs text-theme-text-tertiary mb-3">
+                Primeira vez por aqui?
+              </p>
+              <Link
+                to="/register"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-[11px] uppercase tracking-widest text-orange-600 dark:text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 hover:border-orange-500/40 transition-all duration-300"
+              >
+                Criar Conta Completa <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </>
+        )}
       </MotionDiv>
     </div>
   );

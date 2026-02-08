@@ -22,7 +22,7 @@ export const useGameState = () => {
 };
 
 export const GameStateProvider = ({ children }) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   // Estados
   const [score, setScore] = useState(0);
@@ -37,8 +37,10 @@ export const GameStateProvider = ({ children }) => {
   const [completedLevels, setCompletedLevels] = useState({});
   const [lastDailyXpDate, setLastDailyXpDate] = useState(null);
   const [dailyBonus, setDailyBonus] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [newBadge, setNewBadge] = useState(null);
   const [unclaimedRewards, setUnclaimedRewards] = useState([]);
+  const [syncStatus, setSyncStatus] = useState('synced'); // 'synced', 'saving', 'error'
 
   // --- Idle Game Logic ---
   const [energy, setEnergy] = useState(0);
@@ -48,6 +50,9 @@ export const GameStateProvider = ({ children }) => {
   const badgeUnlocksRef = useRef({});
   const presenceRef = useRef({ lastTickMs: null });
   const prevScoreRef = useRef(0);
+  const prevBadgesRef = useRef(badges);
+  const prevModulesRef = useRef(modules);
+  const lastRemoteSaveRef = useRef(0);
   const saveTimeoutRef = useRef(null);
 
   const BASE_THRESHOLDS = [500, 1500, 2200, 3000, 3800, 5000];
@@ -232,16 +237,22 @@ export const GameStateProvider = ({ children }) => {
 
   // Save Idle Data
   useEffect(() => {
-    if (user) {
-      localStorage.setItem(`ecoplay_modules_${user.id}`, JSON.stringify(modules));
-      localStorage.setItem(`ecoplay_energy_${user.id}`, String(energy));
-      localStorage.setItem(`ecoplay_credits_${user.id}`, String(ecoCredits));
-      localStorage.setItem(`ecoplay_last_time_${user.id}`, String(Date.now()));
+    if (isLoaded) {
+      const storageId = user?.id || 'guest';
+      localStorage.setItem(`ecoplay_modules_${storageId}`, JSON.stringify(modules));
+      localStorage.setItem(`ecoplay_energy_${storageId}`, String(energy));
+      localStorage.setItem(`ecoplay_credits_${storageId}`, String(ecoCredits));
+      localStorage.setItem(`ecoplay_last_time_${storageId}`, String(Date.now()));
     }
-  }, [modules, energy, ecoCredits, user]);
+  }, [modules, energy, ecoCredits, user, isLoaded]);
 
   // Production Loop (1s Tick)
   useEffect(() => {
+    // Cleanup old legacy token if exists to prevent conflicts
+    if (localStorage.getItem('token')) {
+      localStorage.removeItem('token');
+    }
+
     const interval = setInterval(() => {
       const prod = calculateProduction();
       if (prod > 0) {
@@ -260,44 +271,186 @@ export const GameStateProvider = ({ children }) => {
     badgeUnlocksRef.current = badgeUnlocks || {};
   }, [badgeUnlocks]);
 
+  useEffect(() => {
+    if (!isLoaded && user) {
+      // Allow manual re-triggering of load by setting isLoaded to false
+      // This effect handles the re-fetching
+    }
+  }, [isLoaded, user]);
+
   // Efeito para CARREGAR dados
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
-      if (!user) {
-        setScore(0);
-        setBadges([]);
-        setBadgeUnlocks({});
-        setStats({});
-        setCompletedLevels({});
-        setLastDailyXpDate(null);
-        setDailyBonus(null);
-        setUnclaimedRewards([]);
-        return;
+      // 0. Wait for Auth to settle to avoid "Guest Flash"
+      if (authLoading) return;
+
+      const storageId = user?.id || 'guest';
+
+      // CASE 1: User is LOGGED IN - Server is the ONLY source of truth
+      if (user && isRemoteDbEnabled()) {
+        console.log('[Sync] 🔄 Logged-in user detected. Fetching from SERVER...');
+        setSyncStatus('saving');
+
+        try {
+          const remoteRaw = await getProgress(user.id);
+          console.log('[Sync] 📦 Raw server response:', JSON.stringify(remoteRaw, null, 2));
+
+          if (cancelled) return;
+
+          if (remoteRaw) {
+            // Apply server data DIRECTLY - no modification
+            // Server data is the single source of truth
+            const serverScore = remoteRaw.score || 0;
+            const serverBadges = remoteRaw.badges || [];
+            const serverBadgeUnlocks = remoteRaw.badgeUnlocks || {};
+            const serverStats = remoteRaw.stats || {};
+            const serverCompletedLevels = remoteRaw.completedLevels || {};
+            const serverLastDailyXpDate = remoteRaw.lastDailyXpDate || null;
+            const serverUnclaimedRewards = remoteRaw.unclaimedRewards || [];
+
+            // Extract idle data from server (Prioritize new columns, fallback to stats)
+            const savedEnergy = Number(remoteRaw.energy) || Number(serverStats.saved_energy) || 0;
+            const savedCredits = Number(remoteRaw.eco_credits) || Number(serverStats.saved_credits) || 0;
+            const savedModules = serverStats.saved_modules || {};
+            const lastSaveTimestamp = new Date(remoteRaw.updated_at || serverStats.last_save_timestamp || Date.now()).getTime();
+
+            // ========== OFFLINE EARNINGS CALCULATION ==========
+            const now = Date.now();
+            const offlineSeconds = Math.floor((now - lastSaveTimestamp) / 1000);
+
+            let finalEnergy = savedEnergy;
+            let finalCredits = savedCredits;
+
+            if (offlineSeconds > 0 && Object.keys(savedModules).length > 0) {
+              // Calculate production per second from modules
+              const prodPerSec = Object.entries(savedModules).reduce((total, [id, level]) => {
+                const stats = MODULE_STATS[id];
+                return total + (stats ? stats.baseProd * level : 0);
+              }, 0);
+
+              if (prodPerSec > 0) {
+                const offlineEarnings = prodPerSec * offlineSeconds;
+                // 10% of energy becomes credits while offline
+                const offlineCreditsEarned = Math.floor(offlineEarnings * 0.1);
+
+                finalEnergy = savedEnergy + offlineEarnings;
+                finalCredits = savedCredits + offlineCreditsEarned;
+
+                console.log(`[Sync] ⏰ Offline for ${offlineSeconds}s (${Math.floor(offlineSeconds / 60)}min)`);
+                console.log(`[Sync] 💰 Earned ${Math.floor(offlineEarnings)} energy + ${offlineCreditsEarned} credits`);
+              }
+            }
+            // ========== END OFFLINE EARNINGS ==========
+
+            console.log('[Sync] ✅ Applying server data:', {
+              score: serverScore,
+              badges: serverBadges,
+              lastDailyXpDate: serverLastDailyXpDate,
+              energy: finalEnergy,
+              credits: finalCredits,
+              modules: savedModules
+            });
+
+            // Apply state directly from server (with offline bonuses)
+            setScore(serverScore);
+            setBadges(uniqueAppend([], serverBadges));
+            setBadgeUnlocks(serverBadgeUnlocks);
+            setStats(serverStats);
+            setCompletedLevels(serverCompletedLevels);
+            setLastDailyXpDate(serverLastDailyXpDate);
+            setUnclaimedRewards(uniqueAppend([], serverUnclaimedRewards));
+
+            // Apply idle data with offline bonuses
+            if (Number.isFinite(finalEnergy)) setEnergy(finalEnergy);
+            if (Number.isFinite(finalCredits)) setEcoCredits(finalCredits);
+            if (savedModules && typeof savedModules === 'object') setModules(savedModules);
+
+            // Cache locally for faster subsequent loads
+            localStorage.setItem(`ecoplay_progress_${user.id}`, JSON.stringify(remoteRaw));
+
+            // Check if daily bonus should be applied (first login of the day)
+            const today = dateOnlyNowLondrina();
+            if (serverLastDailyXpDate !== today) {
+              const streakBonus = user?.streak ? user.streak * 10 : 0;
+              const totalBonus = 50 + streakBonus;
+              console.log('[Sync] 🎁 Applying daily bonus:', totalBonus);
+              setScore(prev => prev + totalBonus);
+              setStats(prev => ({ ...prev, xp: (prev.xp || 0) + totalBonus, logins: (prev.logins || 0) + 1 }));
+              setLastDailyXpDate(today);
+              setDailyBonus({ amount: totalBonus, streak: user?.streak || 1 });
+            }
+
+            setSyncStatus('synced');
+          } else {
+            // No remote data - this is a NEW user
+            console.log('[Sync] 🆕 No server data found - new user');
+            const guestProgress = localStorage.getItem('ecoplay_progress_guest');
+            if (guestProgress) {
+              try {
+                const guestRaw = JSON.parse(guestProgress);
+                const migrated = prepareProgressData(guestRaw, user);
+                applyProgressState(migrated);
+                console.log('[Sync] 📤 Migrated guest progress to new user');
+              } catch (e) {
+                console.warn('[Sync] Failed to parse guest progress', e);
+              }
+            } else {
+              // Initialize with daily bonus for new user
+              const today = dateOnlyNowLondrina();
+              const bonus = 50;
+              setScore(bonus);
+              setLastDailyXpDate(today);
+              setDailyBonus({ amount: bonus, streak: 1 });
+            }
+            setSyncStatus('synced');
+          }
+        } catch (err) {
+          console.error('[Sync] ❌ Remote load FAILED:', err);
+          setSyncStatus('error');
+
+          // Fallback to localStorage cache only if server fails
+          const cachedProgress = localStorage.getItem(`ecoplay_progress_${user.id}`);
+          if (cachedProgress && !cancelled) {
+            try {
+              const cached = JSON.parse(cachedProgress);
+              const prepared = prepareProgressData(cached, user);
+              applyProgressState(prepared);
+              console.log('[Sync] 💾 Fallback to cached local data');
+            } catch (e) {
+              console.warn('[Sync] Cache parse failed', e);
+            }
+          }
+        }
+      }
+      // CASE 2: GUEST user - use localStorage only
+      else if (!user) {
+        const guestProgress = localStorage.getItem('ecoplay_progress_guest');
+        if (guestProgress) {
+          try {
+            const localRaw = JSON.parse(guestProgress);
+            const localPrepared = prepareProgressData(localRaw, null);
+            applyProgressState(localPrepared);
+          } catch (e) {
+            console.warn('[Sync] Guest progress parse failed', e);
+          }
+        } else {
+          // Reset state for new guest
+          setScore(0);
+          setBadges([]);
+          setBadgeUnlocks({});
+          setStats({});
+          setCompletedLevels({});
+          setLastDailyXpDate(null);
+          setDailyBonus(null);
+          setUnclaimedRewards([]);
+        }
       }
 
-      const userProgress = localStorage.getItem(`ecoplay_progress_${user.id}`);
-      let localRaw = null;
-      try {
-        localRaw = userProgress ? JSON.parse(userProgress) : null;
-      } catch (e) {
-        console.warn('Corrupt local progress found, resetting local cache.', e);
-        localRaw = null;
-      }
-      const localPrepared = prepareProgressData(localRaw, user);
-      applyProgressState(localPrepared);
-
-      if (!isRemoteDbEnabled()) return;
-
-      try {
-        const remoteRaw = await getProgress(user.id);
-        if (cancelled || !remoteRaw) return;
-        const remotePrepared = prepareProgressData(remoteRaw, user);
-        applyProgressState(remotePrepared);
-        localStorage.setItem(`ecoplay_progress_${user.id}`, JSON.stringify(remotePrepared.data));
-      } catch {
-        return;
+      // Mark as loaded
+      if (!cancelled) {
+        setIsLoaded(true);
       }
     };
 
@@ -305,7 +458,7 @@ export const GameStateProvider = ({ children }) => {
     return () => {
       cancelled = true;
     };
-  }, [user, prepareProgressData, applyProgressState]);
+  }, [user, prepareProgressData, applyProgressState, authLoading]);
 
   useEffect(() => {
     if (!user?.id) return undefined;
@@ -360,9 +513,9 @@ export const GameStateProvider = ({ children }) => {
     };
   }, [user?.id]);
 
-  // Efeito para SALVAR dados
+  // Efeito para SALVAR dados (Debounce + Flush)
   useEffect(() => {
-    if (user) {
+    if (user && isLoaded) {
       const progressData = {
         score,
         ecoCredits,
@@ -372,30 +525,79 @@ export const GameStateProvider = ({ children }) => {
           ...stats,
           saved_energy: energy,
           saved_credits: ecoCredits,
-          saved_modules: modules
+          saved_modules: modules,
+          last_save_timestamp: Date.now() // For offline earnings calculation
         },
         completedLevels,
         lastDailyXpDate,
         unclaimedRewards
       };
-      localStorage.setItem(`ecoplay_progress_${user.id}`, JSON.stringify(progressData));
 
-      // Debounce remote save to prevent spamming the server on every tick (energy update)
+      const storageId = user?.id || 'guest';
+      localStorage.setItem(`ecoplay_progress_${storageId}`, JSON.stringify(progressData));
+
+      // Check if badges or modules changed to force immediate save
+      const badgesChanged = JSON.stringify(prevBadgesRef.current || []) !== JSON.stringify(badges || []);
+      const modulesChanged = JSON.stringify(prevModulesRef.current || {}) !== JSON.stringify(modules || {});
+
+      prevBadgesRef.current = badges;
+      prevModulesRef.current = modules;
+
+      // Remote Save Logic
       if (isRemoteDbEnabled() && user?.id) {
-        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        const saveFn = (isFlush = false) => {
+          if (!isFlush) setSyncStatus('saving');
 
-        saveTimeoutRef.current = setTimeout(() => {
-          upsertProgress(user.id, progressData).catch(err => {
-            console.warn('Background Save Failed (Debounced):', err);
-          });
-        }, 5000); // 5 seconds debounce
+          // Pass local version if we had it, but currently we rely on backend checks. 
+          // If backend throws 409, we catch it here.
+          upsertProgress(user.id, progressData)
+            .then(() => { if (!isFlush) setSyncStatus('synced'); })
+            .catch(err => {
+              console.warn('Background Save Failed:', err);
+              if (!isFlush) setSyncStatus('error');
+
+              // Conflict Handling: If version mismatch or conflict, force re-fetch from server
+              // This aligns with "Offline-to-Online Guard" requirement to prioritize server truth.
+              if (err.message && (err.message.includes('Conflict') || err.message.includes('Version') || err.status === 409)) {
+                console.error('[Sync] Conflict detected. Forcing re-fetch from server...');
+                // Alert user about the sync issue
+                if (typeof window !== 'undefined' && window.alert) {
+                  window.alert('Conflito de dados detectado. Atualizando para a versão mais recente do servidor.');
+                }
+                setIsLoaded(false); // Triggers re-load effect
+              }
+            });
+        };
+
+        // Flush on visibility change (Mobile Shield)
+        const handleVisibilityChange = () => {
+          if (document.visibilityState === 'hidden') {
+            // Using keepalive via upsertProgress > apiFetch
+            saveFn(true);
+          }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // Standard Debounce Logic
+        if (badgesChanged || modulesChanged) {
+          if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+          saveFn();
+        } else {
+          if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+          saveTimeoutRef.current = setTimeout(saveFn, 5000); // 5s debounce for standard updates
+        }
+
+        return () => {
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
       }
     }
-  }, [score, ecoCredits, badges, badgeUnlocks, stats, completedLevels, lastDailyXpDate, unclaimedRewards, user, energy, modules]);
+  }, [score, ecoCredits, badges, badgeUnlocks, stats, completedLevels, lastDailyXpDate, unclaimedRewards, user, energy, modules, isLoaded]);
 
   // Efeito para VERIFICAR CONQUISTAS
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isLoaded) return; // Só verifica se já carregou os dados iniciais
 
     // Sincronizar score com stats.xp para garantir consistência
     const currentStats = {
@@ -553,6 +755,12 @@ export const GameStateProvider = ({ children }) => {
       newBadge,
       setNewBadge,
       claimReward,
+      // Sync Status & Controls
+      syncStatus,
+      refreshGameState: () => {
+        setSyncStatus('saving'); // Show activity
+        setIsLoaded(false); // Trigger reload effect
+      },
       // Idle Props
       energy,
       modules,

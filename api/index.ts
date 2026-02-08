@@ -3,7 +3,7 @@
 export default async function handler(req: any, res: any) {
     try {
         // Dynamic import to handle potential startup errors safely
-        const appModule = await import('../server/src/app');
+        const appModule = await import('./_src/app.js');
         const app = appModule.default;
 
         // Forward request to Express app
