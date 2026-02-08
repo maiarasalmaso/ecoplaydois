@@ -513,87 +513,102 @@ export const GameStateProvider = ({ children }) => {
     };
   }, [user?.id]);
 
-  // Efeito para SALVAR dados (Debounce + Flush)
+  // Ref to hold latest state for the interval (avoids closure staleness)
+  const gameStateRef = useRef({
+    score, ecoCredits, badges, badgeUnlocks, stats, completedLevels,
+    lastDailyXpDate, unclaimedRewards, energy, modules
+  });
+
+  // Update Ref whenever state changes
   useEffect(() => {
-    if (user && isLoaded) {
-      const progressData = {
-        score,
-        ecoCredits,
-        badges,
-        badgeUnlocks,
-        stats: {
-          ...stats,
-          saved_energy: energy,
-          saved_credits: ecoCredits,
-          saved_modules: modules,
-          last_save_timestamp: Date.now() // For offline earnings calculation
-        },
-        completedLevels,
-        lastDailyXpDate,
-        unclaimedRewards
-      };
+    gameStateRef.current = {
+      score, ecoCredits, badges, badgeUnlocks, stats, completedLevels,
+      lastDailyXpDate, unclaimedRewards, energy, modules
+    };
+  }, [score, ecoCredits, badges, badgeUnlocks, stats, completedLevels, lastDailyXpDate, unclaimedRewards, energy, modules]);
 
-      const storageId = user?.id || 'guest';
-      localStorage.setItem(`ecoplay_progress_${storageId}`, JSON.stringify(progressData));
+  // Core Save Function
+  const executeSave = useCallback(async (isFlush = false) => {
+    if (!user?.id) return;
+    const current = gameStateRef.current;
 
-      // Check if badges or modules changed to force immediate save
-      const badgesChanged = JSON.stringify(prevBadgesRef.current || []) !== JSON.stringify(badges || []);
-      const modulesChanged = JSON.stringify(prevModulesRef.current || {}) !== JSON.stringify(modules || {});
+    const progressData = {
+      score: current.score,
+      ecoCredits: current.ecoCredits,
+      badges: current.badges,
+      badgeUnlocks: current.badgeUnlocks,
+      stats: {
+        ...current.stats,
+        saved_energy: current.energy,
+        saved_credits: current.ecoCredits,
+        saved_modules: current.modules,
+        last_save_timestamp: Date.now()
+      },
+      completedLevels: current.completedLevels,
+      lastDailyXpDate: current.lastDailyXpDate,
+      unclaimedRewards: current.unclaimedRewards
+    };
 
-      prevBadgesRef.current = badges;
-      prevModulesRef.current = modules;
+    // Local Storage (Sync)
+    const storageId = user.id;
+    localStorage.setItem(`ecoplay_progress_${storageId}`, JSON.stringify(progressData));
 
-      // Remote Save Logic
-      if (isRemoteDbEnabled() && user?.id) {
-        const saveFn = (isFlush = false) => {
-          if (!isFlush) setSyncStatus('saving');
+    // Remote Save
+    if (isRemoteDbEnabled()) {
+      if (!isFlush) setSyncStatus('saving');
 
-          // Pass local version if we had it, but currently we rely on backend checks. 
-          // If backend throws 409, we catch it here.
-          upsertProgress(user.id, progressData)
-            .then(() => { if (!isFlush) setSyncStatus('synced'); })
-            .catch(err => {
-              console.warn('Background Save Failed:', err);
-              if (!isFlush) setSyncStatus('error');
+      try {
+        await upsertProgress(user.id, progressData);
+        if (!isFlush) setSyncStatus('synced');
+      } catch (err) {
+        console.warn('Background Save Failed:', err);
+        if (!isFlush) setSyncStatus('error');
 
-              // Conflict Handling: If version mismatch or conflict, force re-fetch from server
-              // This aligns with "Offline-to-Online Guard" requirement to prioritize server truth.
-              if (err.message && (err.message.includes('Conflict') || err.message.includes('Version') || err.status === 409)) {
-                console.error('[Sync] Conflict detected. Forcing re-fetch from server...');
-                // Alert user about the sync issue
-                if (typeof window !== 'undefined' && window.alert) {
-                  window.alert('Conflito de dados detectado. Atualizando para a versão mais recente do servidor.');
-                }
-                setIsLoaded(false); // Triggers re-load effect
-              }
-            });
-        };
-
-        // Flush on visibility change (Mobile Shield)
-        const handleVisibilityChange = () => {
-          if (document.visibilityState === 'hidden') {
-            // Using keepalive via upsertProgress > apiFetch
-            saveFn(true);
+        // Conflict Handling
+        if (err.message && (err.message.includes('Conflict') || err.message.includes('Version') || err.status === 409)) {
+          console.error('[Sync] Conflict detected. Forcing re-fetch from server...');
+          if (typeof window !== 'undefined' && window.alert) {
+            window.alert('Conflito de dados detectado. Atualizando para a versão mais recente do servidor.');
           }
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
-        // Standard Debounce Logic
-        if (badgesChanged || modulesChanged) {
-          if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-          saveFn();
-        } else {
-          if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-          saveTimeoutRef.current = setTimeout(saveFn, 5000); // 5s debounce for standard updates
+          setIsLoaded(false);
         }
-
-        return () => {
-          document.removeEventListener('visibilitychange', handleVisibilityChange);
-        };
       }
     }
-  }, [score, ecoCredits, badges, badgeUnlocks, stats, completedLevels, lastDailyXpDate, unclaimedRewards, user, energy, modules, isLoaded]);
+  }, [user]);
+
+  // 1. Periodic Background Sync (Every 10 seconds) - Handles fast-changing energy/credits
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+
+    const interval = setInterval(() => {
+      executeSave();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [isLoaded, user, executeSave]);
+
+  // 2. Critical Update Trigger (Immediate Save) - Handles purchases/unlocks
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+
+    // We use a small debounce (500ms) just to batch rapid clicks
+    const timeout = setTimeout(() => {
+      executeSave();
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [badges, modules, completedLevels, user, isLoaded, executeSave]);
+
+  // 3. Flush on Visibility Change (Mobile Shield)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        executeSave(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [executeSave]);
 
   // Efeito para VERIFICAR CONQUISTAS
   useEffect(() => {
