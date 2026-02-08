@@ -6,21 +6,35 @@ const router = Router();
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+const MAX_RETRIES = 2;
+
+// Helper to sanitize JSON
+const cleanAndParse = (text: string) => {
+    let jsonStr = text.trim();
+    if (jsonStr.startsWith('```')) {
+        jsonStr = jsonStr.replace(/^```(json)?/, '').replace(/```$/, '');
+    }
+    return JSON.parse(jsonStr);
+};
+
 router.post('/generate', async (req, res) => {
     try {
-        const { age, topic = 'sustentabilidade e energia renovável' } = req.body;
+        const { age, topic = 'sustentabilidade e energia renovável', count = 5 } = req.body;
 
         if (!process.env.GEMINI_API_KEY) {
             console.error('GEMINI_API_KEY is missing');
             return res.status(500).json({ error: 'Configuração de API de IA ausente no servidor. Contate o administrador.' });
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+        // Use a configured model or default
+        const modelName = "gemini-1.5-flash";
+        const model = genAI.getGenerativeModel({ model: modelName });
 
         // Ensure age is safe
         const safeAge = parseInt(age) || 12;
+        const safeCount = Math.min(Math.max(parseInt(count) || 5, 1), 10); // Clamp 1-10
 
-        const prompt = `Gere 5 perguntas de quiz de múltipla escolha educativas e divertidas EM PORTUGUÊS DO BRASIL para uma criança de ${safeAge} anos sobre "${topic}".
+        const prompt = `Gere ${safeCount} perguntas de quiz de múltipla escolha educativas e divertidas EM PORTUGUÊS DO BRASIL para uma criança de ${safeAge} anos sobre "${topic}".
     Certifique-se de que TODAS as perguntas, opções e explicações estejam em Português.
     A saída DEVE ser estritamente um JSON array válido, sem formatação Markdown ou texto adicional.
     Use o seguinte formato para cada objeto do array:
@@ -38,30 +52,50 @@ router.post('/generate', async (req, res) => {
         const response = await result.response;
         const text = response.text();
 
-        // Clean up markdown code blocks if present (e.g. ```json ... ```)
-        let jsonStr = text.trim();
-        if (jsonStr.startsWith('```')) {
-            jsonStr = jsonStr.replace(/^```(json)?/, '').replace(/```$/, '');
-        }
+        const questions = cleanAndParse(text);
 
-        // Parse JSON
-        const questions = JSON.parse(jsonStr);
-
-        // Validate structure briefly
         if (!Array.isArray(questions)) {
             throw new Error('Formato de resposta inválido da IA');
         }
 
-        // Add unique IDs based on timestamp to avoid collisions if merged
-        const questionsWithIds = questions.map((q, idx) => ({
+        const questionsWithIds = questions.map((q: any, idx: number) => ({
             ...q,
-            id: `ai_${Date.now()}_${idx}`
+            id: `ai_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 5)}`
         }));
 
         res.json(questionsWithIds);
     } catch (error) {
         console.error('Erro ao gerar quiz com IA:', error);
         res.status(500).json({ error: 'Falha ao gerar perguntas com IA. Tente novamente.' });
+    }
+});
+
+router.post('/tip', async (req, res) => {
+    try {
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(500).json({ error: 'API Key missing' });
+        }
+
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const seed = Date.now();
+
+        const prompt = `
+          Gere uma "Dica Rápida" ÚNICA e CRIATIVA sobre sustentabilidade, economia de energia ou ecologia para crianças.
+          A dica deve ter no máximo 15 palavras.
+          Use uma linguagem motivadora, divertida e variada.
+          Evite repetir dicas comuns como "apagar a luz" ou "fechar a torneira" a menos que seja muito criativo.
+          NÃO use markdown. Apenas o texto puro.
+          Seed de aleatoriedade: ${seed}
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text().trim();
+
+        res.json({ tip: text });
+    } catch (error) {
+        console.error('Error generating tip:', error);
+        res.status(500).json({ error: 'Failed to generate tip' });
     }
 });
 
