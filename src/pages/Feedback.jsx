@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Award, BarChart3, Download, FileText, Star, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -300,43 +300,33 @@ const Feedback = () => {
     showToast._t = window.setTimeout(() => setToast(null), 2400);
   }, []);
 
-  const onCompleteSection = useCallback(
-    (section) => {
-      if (section === 'ux') {
-        showToast({ type: 'ok', text: 'Seção de Experiência concluída. Você ganhou uma medalha!' });
-      }
-      if (section === 'learning') {
-        showToast({ type: 'ok', text: 'Seção de Aprendizado concluída. Pontos bônus liberados!' });
-      }
-    },
-    [showToast]
-  );
+  /* Toasts logic refactored to side-effects */
+  const uxToastShown = useRef(false);
+  const learningToastShown = useRef(false);
 
-  const setUxValue = useCallback(
-    (id, value) => {
-      setUx((prev) => {
-        const next = { ...(prev || {}), [id]: value };
-        const done = countAnsweredLikert(next, UX_LIKERT.map((q) => q.id)) === UX_LIKERT.length;
-        if (done && countAnsweredLikert(prev, UX_LIKERT.map((q) => q.id)) !== UX_LIKERT.length) onCompleteSection('ux');
-        return next;
-      });
-    },
-    [onCompleteSection]
-  );
+  useEffect(() => {
+    const uxDone = countAnsweredLikert(ux, UX_LIKERT.map((q) => q.id)) === UX_LIKERT.length;
+    if (uxDone && !uxToastShown.current) {
+      uxToastShown.current = true;
+      showToast({ type: 'ok', text: 'Seção de Experiência concluída. Você ganhou uma medalha!' });
+    }
+  }, [ux, showToast]);
 
-  const setLearningValue = useCallback(
-    (id, value) => {
-      setLearning((prev) => {
-        const next = { ...(prev || {}), [id]: value };
-        const done = countAnsweredLikert(next, LEARNING_LIKERT.map((q) => q.id)) === LEARNING_LIKERT.length;
-        if (done && countAnsweredLikert(prev, LEARNING_LIKERT.map((q) => q.id)) !== LEARNING_LIKERT.length) {
-          onCompleteSection('learning');
-        }
-        return next;
-      });
-    },
-    [onCompleteSection]
-  );
+  useEffect(() => {
+    const learningDone = countAnsweredLikert(learning, LEARNING_LIKERT.map((q) => q.id)) === LEARNING_LIKERT.length;
+    if (learningDone && !learningToastShown.current) {
+      learningToastShown.current = true;
+      showToast({ type: 'ok', text: 'Seção de Aprendizado concluída. Pontos bônus liberados!' });
+    }
+  }, [learning, showToast]);
+
+  const setUxValue = useCallback((id, value) => {
+    setUx((prev) => ({ ...(prev || {}), [id]: value }));
+  }, []);
+
+  const setLearningValue = useCallback((id, value) => {
+    setLearning((prev) => ({ ...(prev || {}), [id]: value }));
+  }, []);
 
   const exportCsv = useCallback(() => {
     const csv = buildFeedbackCsv(responses);
