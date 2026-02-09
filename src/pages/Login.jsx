@@ -140,7 +140,7 @@ const Login = () => {
                     <KeyRound className="absolute left-3 top-3.5 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5" />
                     <input
                       id="email-address"
-                      name="email"
+                      name="ecoplay_login_email"
                       type="email"
                       autoComplete="off"
                       required
@@ -160,7 +160,7 @@ const Login = () => {
                     <Lock className="absolute left-3 top-3.5 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5" />
                     <input
                       id="password"
-                      name="password"
+                      name="ecoplay_login_password"
                       type="password"
                       autoComplete="new-password"
                       required
