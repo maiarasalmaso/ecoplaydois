@@ -42,6 +42,10 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Date Filters
+  const [dateStart, setDateStart] = useState('');
+  const [dateEnd, setDateEnd] = useState('');
+
   useEffect(() => {
     if (!authLoading) {
       if (!user || user.role !== 'ADMIN') {
@@ -57,8 +61,14 @@ const AdminPanel = () => {
     setError(null);
     try {
       const [usersRes, feedbackRes] = await Promise.all([
-        api.get('/users').catch(err => { console.error('Users API', err); return { data: [] }; }),
-        api.get('/feedback').catch(err => { console.error('Feedback API', err); return { data: [] }; })
+        api.get('/users').catch((err) => {
+          console.error('Users API', err);
+          return { data: [] };
+        }),
+        api.get('/feedback').catch((err) => {
+          console.error('Feedback API', err);
+          return { data: [] };
+        }),
       ]);
       setUsers(usersRes.data);
       setFeedback(feedbackRes.data);
@@ -74,6 +84,29 @@ const AdminPanel = () => {
     logout();
     navigate('/admin');
   };
+
+  const getReviewRating = (f) => {
+    // If rating exists, use it. If not, try to determine from UX satisfaction or default to 0
+    if (f.rating) return Number(f.rating);
+    if (f.ux?.ux_satisfaction) return Number(f.ux.ux_satisfaction);
+    return 0;
+  };
+
+  const filteredFeedback = feedback
+    .map(f => ({ ...f, computedRating: getReviewRating(f) }))
+    .filter((f) => {
+      if (!dateStart && !dateEnd) return true;
+      const d = new Date(f.created_at).getTime();
+      const start = dateStart ? new Date(dateStart).getTime() : 0;
+      const end = dateEnd ? new Date(dateEnd).setHours(23, 59, 59, 999) : Infinity;
+      return d >= start && d <= end;
+    })
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  const averageRating =
+    filteredFeedback.length > 0
+      ? filteredFeedback.reduce((acc, curr) => acc + (curr.computedRating || 0), 0) / filteredFeedback.length
+      : 0;
 
   const MotionDiv = motion.div;
 
@@ -97,13 +130,13 @@ const AdminPanel = () => {
         '--admin-contrast': adminContrast,
       }}
     >
-
-
       <div className="max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8 relative z-10">
-
         {/* Header */}
         <div className="flex items-center justify-between gap-4 mb-8">
-          <Link to="/" className="flex items-center gap-2 text-[color:var(--admin-accent)] hover:text-[color:var(--admin-accent-2)] transition-colors font-semibold">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-[color:var(--admin-accent)] hover:text-[color:var(--admin-accent-2)] transition-colors font-semibold"
+          >
             <ArrowLeft className="w-5 h-5" />
             Voltar ao site
           </Link>
@@ -139,9 +172,7 @@ const AdminPanel = () => {
             </div>
             <div>
               <h1 className="text-3xl font-display font-bold text-theme-text-primary">Painel do Administrador</h1>
-              <p className="text-theme-text-tertiary">
-                Visão consolidada do sistema.
-              </p>
+              <p className="text-theme-text-tertiary">Visão consolidada do sistema.</p>
             </div>
           </div>
 
@@ -163,7 +194,7 @@ const AdminPanel = () => {
                 : 'bg-theme-bg-tertiary/80 text-theme-text-primary border-theme-border hover:bg-theme-bg-secondary'
                 }`}
             >
-              Avaliações ({feedback.length})
+              Avaliações ({filteredFeedback.length})
             </button>
             <button
               onClick={() => setTab('evolution')}
@@ -192,14 +223,23 @@ const AdminPanel = () => {
                 </thead>
                 <tbody className="divide-y divide-theme-border/50">
                   {users.length === 0 ? (
-                    <tr><td colSpan={4} className="p-8 text-center text-theme-text-tertiary">Nenhum usuário encontrado.</td></tr>
+                    <tr>
+                      <td colSpan={4} className="p-8 text-center text-theme-text-tertiary">
+                        Nenhum usuário encontrado.
+                      </td>
+                    </tr>
                   ) : (
-                    users.map(u => (
+                    users.map((u) => (
                       <tr key={u.id} className="hover:bg-theme-bg-tertiary/30 transition-colors">
                         <td className="px-6 py-4 font-bold text-theme-text-primary">{u.full_name}</td>
                         <td className="px-6 py-4 text-theme-text-secondary">{u.email}</td>
                         <td className="px-6 py-4">
-                          <span className={`text-xs px-2 py-1 rounded font-bold ${u.role === 'ADMIN' ? 'bg-orange-500/20 text-orange-400' : 'bg-theme-bg-tertiary text-theme-text-tertiary'}`}>
+                          <span
+                            className={`text-xs px-2 py-1 rounded font-bold ${u.role === 'ADMIN'
+                              ? 'bg-orange-500/20 text-orange-400'
+                              : 'bg-theme-bg-tertiary text-theme-text-tertiary'
+                              }`}
+                          >
                             {u.role}
                           </span>
                         </td>
@@ -216,32 +256,68 @@ const AdminPanel = () => {
 
           {tab === 'feedback' && (
             <div className="space-y-6">
+              {/* Filters */}
+              <div className="flex flex-wrap items-end gap-4 p-4 rounded-2xl bg-theme-bg-tertiary/10 border border-theme-border">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-theme-text-secondary uppercase">De</label>
+                  <input
+                    type="date"
+                    value={dateStart}
+                    onChange={(e) => setDateStart(e.target.value)}
+                    className="block w-full px-3 py-2 rounded-xl bg-theme-bg-secondary border border-theme-border text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-theme-text-secondary uppercase">Até</label>
+                  <input
+                    type="date"
+                    value={dateEnd}
+                    onChange={(e) => setDateEnd(e.target.value)}
+                    className="block w-full px-3 py-2 rounded-xl bg-theme-bg-secondary border border-theme-border text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)]"
+                  />
+                </div>
+                {(dateStart || dateEnd) && (
+                  <button
+                    onClick={() => { setDateStart(''); setDateEnd(''); }}
+                    className="px-4 py-2 rounded-xl bg-theme-bg-secondary border border-theme-border text-theme-text-secondary hover:text-red-400 hover:border-red-400/50 transition-colors text-sm font-bold"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
+
               {/* Feedback Sub-Tabs */}
               <div className="flex gap-4 border-b border-theme-border pb-2">
                 <button
                   onClick={() => setFeedbackSubTab('chart')}
                   className={`pb-2 text-sm font-bold transition-all relative ${feedbackSubTab === 'chart'
-                    ? 'text-[color:var(--admin-accent)]'
-                    : 'text-theme-text-secondary hover:text-theme-text-primary'
+                      ? 'text-[color:var(--admin-accent)]'
+                      : 'text-theme-text-secondary hover:text-theme-text-primary'
                     }`}
                 >
                   <BarChart3 className="inline mr-2 w-4 h-4" />
                   Gráfico de Votações
                   {feedbackSubTab === 'chart' && (
-                    <motion.div layoutId="activeFeedbackTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[color:var(--admin-accent)]" />
+                    <motion.div
+                      layoutId="activeFeedbackTab"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[color:var(--admin-accent)]"
+                    />
                   )}
                 </button>
                 <button
                   onClick={() => setFeedbackSubTab('comments')}
                   className={`pb-2 text-sm font-bold transition-all relative ${feedbackSubTab === 'comments'
-                    ? 'text-[color:var(--admin-accent)]'
-                    : 'text-theme-text-secondary hover:text-theme-text-primary'
+                      ? 'text-[color:var(--admin-accent)]'
+                      : 'text-theme-text-secondary hover:text-theme-text-primary'
                     }`}
                 >
                   <FileText className="inline mr-2 w-4 h-4" />
-                  Comentários ({feedback.length})
+                  Comentários ({filteredFeedback.length})
                   {feedbackSubTab === 'comments' && (
-                    <motion.div layoutId="activeFeedbackTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[color:var(--admin-accent)]" />
+                    <motion.div
+                      layoutId="activeFeedbackTab"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[color:var(--admin-accent)]"
+                    />
                   )}
                 </button>
               </div>
@@ -250,13 +326,13 @@ const AdminPanel = () => {
               {feedbackSubTab === 'chart' && (
                 <div className="p-6 rounded-2xl border border-theme-border bg-theme-bg-tertiary/20">
                   <h3 className="text-xl font-bold text-theme-text-primary mb-6">Distribuição de Avaliações</h3>
-                  {feedback.length === 0 ? (
-                    <p className="text-theme-text-tertiary">Ainda não há dados suficientes para o gráfico.</p>
+                  {filteredFeedback.length === 0 ? (
+                    <p className="text-theme-text-tertiary">Ainda não há dados suficientes para o gráfico no período selecionado.</p>
                   ) : (
                     <div className="h-64 flex items-end justify-center gap-8 px-4">
                       {[1, 2, 3, 4, 5].map((star) => {
-                        const count = feedback.filter(f => Math.round(f.rating) === star).length;
-                        const percentage = feedback.length > 0 ? (count / feedback.length) * 100 : 0;
+                        const count = filteredFeedback.filter((f) => Math.round(f.computedRating) === star).length;
+                        const percentage = filteredFeedback.length > 0 ? (count / filteredFeedback.length) * 100 : 0;
 
                         return (
                           <div key={star} className="flex flex-col items-center gap-2 w-16 group">
@@ -264,7 +340,7 @@ const AdminPanel = () => {
                               <motion.div
                                 initial={{ height: 0 }}
                                 animate={{ height: `${percentage}%` }}
-                                transition={{ duration: 0.5, ease: "easeOut" }}
+                                transition={{ duration: 0.5, ease: 'easeOut' }}
                                 className="w-full bg-[color:var(--admin-accent)] opacity-80 group-hover:opacity-100 transition-opacity relative"
                               >
                                 {count > 0 && (
@@ -285,24 +361,26 @@ const AdminPanel = () => {
                   <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                     <div className="p-4 rounded-xl bg-theme-bg-secondary border border-theme-border">
                       <div className="text-sm text-theme-text-tertiary">Total de Avaliações</div>
-                      <div className="text-2xl font-bold text-theme-text-primary">{feedback.length}</div>
+                      <div className="text-2xl font-bold text-theme-text-primary">{filteredFeedback.length}</div>
                     </div>
                     <div className="p-4 rounded-xl bg-theme-bg-secondary border border-theme-border">
                       <div className="text-sm text-theme-text-tertiary">Média Geral</div>
                       <div className="text-2xl font-bold text-[color:var(--admin-accent)]">
-                        {(feedback.reduce((acc, curr) => acc + Number(curr.rating), 0) / (feedback.length || 1)).toFixed(1)}
+                        {averageRating.toFixed(1)}
                       </div>
                     </div>
                     <div className="p-4 rounded-xl bg-theme-bg-secondary border border-theme-border">
                       <div className="text-sm text-theme-text-tertiary">Semana Atual</div>
                       <div className="text-2xl font-bold text-theme-text-primary">
-                        {feedback.filter(f => {
-                          const date = new Date(f.created_at);
-                          const now = new Date();
-                          const diffTime = Math.abs(now - date);
-                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                          return diffDays <= 7;
-                        }).length}
+                        {
+                          filteredFeedback.filter((f) => {
+                            const date = new Date(f.created_at);
+                            const now = new Date();
+                            const diffTime = Math.abs(now - date);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            return diffDays <= 7;
+                          }).length
+                        }
                       </div>
                     </div>
                   </div>
@@ -322,10 +400,14 @@ const AdminPanel = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-theme-border/50">
-                      {feedback.length === 0 ? (
-                        <tr><td colSpan={4} className="p-8 text-center text-theme-text-tertiary">Nenhuma avaliação encontrada.</td></tr>
+                      {filteredFeedback.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="p-8 text-center text-theme-text-tertiary">
+                            Nenhuma avaliação encontrada no período.
+                          </td>
+                        </tr>
                       ) : (
-                        feedback.map(f => (
+                        filteredFeedback.map((f) => (
                           <tr key={f.id} className="hover:bg-theme-bg-tertiary/30 transition-colors">
                             <td className="px-6 py-4">
                               <div className="font-bold text-theme-text-primary">{f.full_name || 'Anônimo'}</div>
@@ -333,19 +415,28 @@ const AdminPanel = () => {
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-1 font-bold text-yellow-500 w-fit">
-                                {f.rating} <Star className="w-3 h-3 fill-yellow-500" />
+                                {f.computedRating} <Star className="w-3 h-3 fill-yellow-500" />
                               </div>
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex flex-col gap-1 text-theme-text-secondary text-sm p-2 rounded bg-theme-bg-primary/50 border border-theme-border/50">
                                 {f.ux?.ux_open_like ? (
-                                  <div><span className="font-bold text-emerald-500/80 text-xs uppercase mr-1">Gostou:</span>{f.ux.ux_open_like}</div>
+                                  <div>
+                                    <span className="font-bold text-emerald-500/80 text-xs uppercase mr-1">Gostou:</span>
+                                    {f.ux.ux_open_like}
+                                  </div>
                                 ) : null}
                                 {f.ux?.ux_open_improve ? (
-                                  <div><span className="font-bold text-amber-500/80 text-xs uppercase mr-1">Melhorar:</span>{f.ux.ux_open_improve}</div>
+                                  <div>
+                                    <span className="font-bold text-amber-500/80 text-xs uppercase mr-1">Melhorar:</span>
+                                    {f.ux.ux_open_improve}
+                                  </div>
                                 ) : null}
                                 {f.ux?.ux_open_ideas ? (
-                                  <div><span className="font-bold text-blue-500/80 text-xs uppercase mr-1">Ideia:</span>{f.ux.ux_open_ideas}</div>
+                                  <div>
+                                    <span className="font-bold text-blue-500/80 text-xs uppercase mr-1">Ideia:</span>
+                                    {f.ux.ux_open_ideas}
+                                  </div>
                                 ) : null}
                                 {!f.ux?.ux_open_like && !f.ux?.ux_open_improve && !f.ux?.ux_open_ideas && (
                                   <div className="italic opacity-50 text-center">Sem comentário escrito</div>
