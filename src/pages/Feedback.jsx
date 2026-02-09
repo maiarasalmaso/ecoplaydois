@@ -454,9 +454,8 @@ const Feedback = () => {
 
             <div className="mt-6 flex flex-wrap gap-2">
               {[
-                { id: 'ux', label: 'Experi\u00eancia do Usu\u00e1rio' },
+                { id: 'ux', label: 'Experiência do Usuário' },
                 { id: 'learning', label: 'Aprendizado' },
-                { id: 'report', label: 'Comunidade' },
               ].map((tab) => {
                 const isActive = activeSection === tab.id;
                 return (
@@ -481,7 +480,7 @@ const Feedback = () => {
                 {activeSection === 'ux' && (
                   <div className="bg-theme-bg-secondary/70 border border-theme-border rounded-3xl p-5 md:p-6">
                     <div className="flex items-center justify-between gap-3 mb-4">
-                      <h2 className="text-xl font-display font-bold">{'Experi\u00eancia do Usu\u00e1rio'}</h2>
+                      <h2 className="text-xl font-display font-bold">{'Experiência do Usuário'}</h2>
                       <div className="text-xs text-theme-text-tertiary font-mono">
                         {countAnsweredLikert(ux, UX_LIKERT.map((q) => q.id))}/{UX_LIKERT.length} Likert
                       </div>
@@ -553,53 +552,6 @@ const Feedback = () => {
                   </div>
                 )}
 
-                {activeSection === 'report' && (
-                  <div className="bg-theme-bg-secondary/70 border border-theme-border rounded-3xl p-5 md:p-6">
-                    <div className="flex items-center justify-between gap-3 mb-4">
-                      <h2 className="text-xl font-display font-bold">{'Comunidade'}</h2>
-                    </div>
-
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <StatCard Icon={BarChart3} label="Respostas" value={summary.totalResponses} accent={accent} />
-                      <StatCard Icon={Star} label={'M\u00e9dia UX'} value={formatDecimal(summary.uxOverall)} accent={accent2} />
-                      <StatCard Icon={Star} label={'M\u00e9dia Aprendizado'} value={formatDecimal(summary.learningOverall)} accent={accent3} />
-                    </div>
-
-                    <div className="mt-5">
-                      <div className="text-sm font-semibold text-theme-text-secondary mb-2">{'M\u00e9dias por pergunta (UX)'}</div>
-                      <div className="space-y-2">
-                        {UX_LIKERT.map((q) => (
-                          <MiniBar
-                            key={q.id}
-                            label={q.label}
-                            value={summary.uxAverages[q.id] || 0}
-                            max={5}
-                            accent={accent.color}
-                            accentAlt={accent2.color}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="mt-5">
-                      <div className="text-sm font-semibold text-theme-text-secondary mb-2">
-                        {'M\u00e9dias por pergunta (Aprendizado)'}
-                      </div>
-                      <div className="space-y-2">
-                        {LEARNING_LIKERT.map((q) => (
-                          <MiniBar
-                            key={q.id}
-                            label={q.label}
-                            value={summary.learningAverages[q.id] || 0}
-                            max={5}
-                            accent={accent2.color}
-                            accentAlt={accent3.color}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
               <div className="lg:col-span-2 space-y-4">
                 <div className="bg-theme-bg-secondary/70 border border-theme-border rounded-3xl p-5">
@@ -607,7 +559,7 @@ const Feedback = () => {
                     <div>
                       <div className="text-sm font-display font-bold text-theme-text-primary">Recompensas</div>
                       <div className="text-xs text-theme-text-tertiary font-mono mt-1">
-                        {'Complete as se\u00e7\u00f5es para desbloquear.'}
+                        {'Complete as seções para desbloquear.'}
                       </div>
                     </div>
                     <div className="text-xs text-theme-text-tertiary font-mono">{badges.length} badges</div>
