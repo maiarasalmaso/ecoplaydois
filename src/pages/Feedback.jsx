@@ -166,9 +166,21 @@ const StatCard = ({ Icon, label, value, accent }) => (
         <div className="text-xs uppercase tracking-wider text-theme-text-tertiary font-mono">{label}</div>
         <div className="text-2xl font-display font-bold mt-1 text-[color:var(--stat-accent)]">{value}</div>
       </div>
-      <div className="w-10 h-10 rounded-xl border border-[color:var(--stat-border)] bg-[color:var(--stat-surface)] flex items-center justify-center text-[color:var(--stat-accent)]">
+      <motion.div
+        animate={{
+          y: [0, -4, 0],
+          scale: [1, 1.1, 1],
+          filter: ['brightness(1)', 'brightness(1.2)', 'brightness(1)'],
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+        className="w-10 h-10 rounded-xl border border-[color:var(--stat-border)] bg-[color:var(--stat-surface)] flex items-center justify-center text-[color:var(--stat-accent)] shadow-[0_0_10px_var(--stat-surface)]"
+      >
         <Icon className="w-5 h-5" />
-      </div>
+      </motion.div>
     </div>
   </div>
 );
