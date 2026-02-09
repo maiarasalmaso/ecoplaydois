@@ -34,7 +34,7 @@ const MobileDock = () => {
 
     return (
         <>
-            <div className="md:hidden fixed bottom-6 left-4 right-4 z-[100] h-16 bg-theme-bg-secondary/90 backdrop-blur-xl border border-theme-border/50 rounded-2xl shadow-2xl shadow-black/50 flex items-center justify-between px-6">
+            <div className="md:hidden fixed bottom-0 left-0 right-0 z-[100] h-16 bg-theme-bg-secondary/95 backdrop-blur-xl border-t border-theme-border flex items-center justify-between px-6 pb-1">
                 <Link
                     to="/"
                     onClick={playNavigation}
