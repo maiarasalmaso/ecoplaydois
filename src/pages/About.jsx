@@ -186,14 +186,9 @@ const About = () => {
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Enviar email para contato do EcoPlay"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 dark:bg-slate-800 text-white rounded-full font-bold hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors border border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 shadow-lg hover:scale-105 transform duration-200"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#EA4335] text-white rounded-full font-bold hover:brightness-110 transition-all border border-transparent shadow-lg hover:scale-105 active:scale-95 duration-200"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6Z" fill="white" />
-                    <path d="M2 6L12 13L22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6Z" fill="#EAEAEA" />
-                    <path d="M20 4H4C2.9 4 2 4.9 2 6L12 13L22 6C22 4.9 21.1 4 20 4Z" fill="#EA4335" />
-                    <path d="M2 6L12 13L22 6" stroke="#C5221F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <Mail className="w-5 h-5 text-white" />
                   Gmail
                 </a>
                 <a
@@ -201,29 +196,9 @@ const About = () => {
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Abrir Instagram do EcoPlay"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 dark:bg-slate-800 text-white rounded-full font-bold border border-slate-700 hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500/60 shadow-lg hover:scale-105 transform duration-200"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 text-white rounded-full font-bold hover:brightness-110 transition-all border border-transparent shadow-lg hover:scale-105 active:scale-95 duration-200"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                      <radialGradient id="insta_grad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(6.5 22.5) rotate(-55) scale(26)">
-                        <stop stopColor="#FFD600" />
-                        <stop offset="0.35" stopColor="#FF0100" />
-                        <stop offset="0.75" stopColor="#D80027" />
-                        <stop offset="1" stopColor="#C40087" />
-                      </radialGradient>
-                      <linearGradient id="insta_grad2" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#405DE6" />
-                        <stop offset="0.2" stopColor="#5851DB" />
-                        <stop offset="0.4" stopColor="#833AB4" />
-                        <stop offset="0.6" stopColor="#C13584" />
-                        <stop offset="0.8" stopColor="#E1306C" />
-                        <stop offset="1" stopColor="#FD1D1D" />
-                      </linearGradient>
-                    </defs>
-                    <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#insta_grad2)" />
-                    <circle cx="12" cy="12" r="5" stroke="white" strokeWidth="2" fill="none" />
-                    <circle cx="17.5" cy="6.5" r="1.5" fill="white" />
-                  </svg>
+                  <Instagram className="w-5 h-5 text-white" />
                   Instagram
                 </a>
               </div>
