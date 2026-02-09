@@ -776,16 +776,10 @@ const Feedback = () => {
                   Seu feedback sobre a EcoPlay foi registrado com sucesso. Você ganhou pontos bônus por contribuir!
                 </p>
 
-                <div className="flex gap-3 w-full">
-                  <Link
-                    to="/dashboard"
-                    className="flex-1 bg-[color:var(--feedback-accent)] text-[color:var(--feedback-contrast)] rounded-xl py-3 font-bold hover:brightness-110 transition-all text-center"
-                  >
-                    Ir para Dash
-                  </Link>
+                <div className="w-full">
                   <button
                     onClick={() => setSubmitted(null)}
-                    className="flex-1 bg-theme-bg-tertiary text-theme-text-primary rounded-xl py-3 font-bold hover:bg-theme-bg-tertiary/80 transition-all"
+                    className="w-full bg-theme-bg-tertiary text-theme-text-primary rounded-xl py-3 font-bold hover:bg-theme-bg-tertiary/80 transition-all"
                   >
                     Fechar
                   </button>
