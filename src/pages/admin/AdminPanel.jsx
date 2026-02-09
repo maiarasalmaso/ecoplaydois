@@ -120,6 +120,11 @@ const AdminPanel = () => {
     })
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
+  // Filter only feedback with actual comments for the comments tab
+  const commentsList = filteredFeedback.filter(f =>
+    f.ux?.ux_open_like || f.ux?.ux_open_improve || f.ux?.ux_open_ideas
+  );
+
   const averageRating =
     filteredFeedback.length > 0
       ? filteredFeedback.reduce((acc, curr) => acc + (curr.computedRating || 0), 0) / filteredFeedback.length
