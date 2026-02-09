@@ -484,14 +484,14 @@ const AdminPanel = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-theme-border/50">
-                      {filteredFeedback.length === 0 ? (
+                      {commentsList.length === 0 ? (
                         <tr>
                           <td colSpan={5} className="p-8 text-center text-theme-text-tertiary">
-                            Nenhuma avaliação encontrada no período.
+                            Nenhum comentário encontrado no período.
                           </td>
                         </tr>
                       ) : (
-                        filteredFeedback.map((f) => {
+                        commentsList.map((f) => {
                           const isExpanded = expandedFeedback === f.id;
                           return (
                             <>
@@ -563,8 +563,8 @@ const AdminPanel = () => {
                                                   <Star
                                                     key={s}
                                                     className={`w-3 h-3 ${s <= (f.ux?.[q.id] || 0)
-                                                      ? 'fill-amber-500 text-amber-500'
-                                                      : 'text-theme-border'
+                                                        ? 'fill-amber-500 text-amber-500'
+                                                        : 'text-theme-border'
                                                       }`}
                                                   />
                                                 ))}
@@ -586,8 +586,8 @@ const AdminPanel = () => {
                                                   <Star
                                                     key={s}
                                                     className={`w-3 h-3 ${s <= (f.learning?.[q.id] || 0)
-                                                      ? 'fill-emerald-500 text-emerald-500'
-                                                      : 'text-theme-border'
+                                                        ? 'fill-emerald-500 text-emerald-500'
+                                                        : 'text-theme-border'
                                                       }`}
                                                   />
                                                 ))}
