@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { Menu, X, LogOut, Calendar, Star, Zap, DoorOpen, Trophy, Flame, Volume2, VolumeX } from 'lucide-react';
+import { Menu, X, LogOut, Calendar, Star, Zap, DoorOpen, Trophy, Flame, Volume2, VolumeX, Home, Gamepad2, User } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { useGameState } from '@/context/GameStateContext';
@@ -110,366 +110,290 @@ const Header = () => {
                 </Link>
               )}
             </div>
-          </div>
-        </div>
-      </header>
-    );
-  }
-
-  return (
-    <header
-      className="bg-[var(--theme-backdrop)] backdrop-blur-md border-b border-theme-border sticky top-0 z-50 transition-all duration-300"
-      style={headerStyle}
-    >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          {/* Logo HUD Style */}
-          <Link to="/" className="flex items-center gap-2 md:gap-3 group relative shrink-0">
-            <div className="absolute inset-0 bg-green-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="bg-gradient-to-br from-theme-bg-tertiary to-theme-bg-secondary p-2 md:p-2.5 rounded-xl border border-theme-border shadow-lg group-hover:scale-105 transition-transform relative z-10 flex items-center justify-center">
-              <span className="terra-girando text-xl md:text-2xl leading-none">&#x1F30D;</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-display font-bold text-lg md:text-2xl tracking-wide text-theme-text-primary leading-none">
-                ECO<span className="text-green-400">PLAY</span>
-              </span>
-            </div>
           </Link>
-
-          {/* Desktop Nav HUD */}
-          <nav className="hidden md:grid grid-flow-col auto-cols-fr gap-2 bg-theme-bg-tertiary p-1.5 rounded-full border border-theme-border backdrop-blur-md">
-            <Link to="/" className="flex items-center justify-center px-6 py-2 rounded-full text-theme-text-primary hover:text-green-400 hover:bg-green-500/10 hover:shadow-lg hover:shadow-[0_0_18px_rgba(74,222,128,0.3)] font-medium transition-all duration-300 text-sm font-display relative group overflow-hidden whitespace-nowrap">
-              <span className="relative z-10">BASE</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </Link>
-            <Link to="/games" className="flex items-center justify-center px-6 py-2 rounded-full text-theme-text-primary hover:text-green-400 hover:bg-green-500/10 hover:shadow-lg hover:shadow-[0_0_18px_rgba(74,222,128,0.3)] font-medium transition-all duration-300 text-sm font-display relative group overflow-hidden whitespace-nowrap">
-              <span className="relative z-10">JOGOS</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </Link>
-            {user && (
-              <Link
-                to="/dashboard"
-
-
-                className="flex items-center justify-center px-6 py-2 rounded-full text-theme-text-primary hover:text-green-400 hover:bg-green-500/10 hover:shadow-lg hover:shadow-[0_0_18px_rgba(74,222,128,0.3)] font-medium transition-all duration-300 text-sm font-display relative group overflow-hidden whitespace-nowrap"
-              >
-                <span className="relative z-10">PAINEL</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Link>
-            )}
-            {canShowFeedbackCta && (
-              <Link
-                to="/avaliacao"
-                onClick={() => { handleFeedbackClick(); playClick(); }}
-
-                className="flex items-center justify-center px-6 py-2 rounded-full text-theme-text-primary hover:text-green-400 hover:bg-green-500/10 hover:shadow-lg hover:shadow-[0_0_18px_rgba(74,222,128,0.3)] font-medium transition-all duration-300 text-sm font-display relative group overflow-hidden whitespace-nowrap"
-              >
-                <span className="relative z-10">AVALIE</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Link>
-            )}
-          </nav>
-
-          {/* User Stats & Auth Buttons */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <ThemeToggle className="shrink-0" />
-            {/* Server Status Indicator moved to Footer */}
-
-            {user ? (
-              <div className="hidden md:flex items-center gap-4">
-                {/* HUD Stats Panel */}
-                <motion.div
-                  className="hidden lg:flex items-center gap-4 bg-theme-bg-tertiary hover:bg-theme-bg-secondary text-theme-text-primary px-4 py-2 rounded-xl border border-theme-border hover:border-green-500/30 backdrop-blur-md shadow-lg cursor-default transition-colors duration-300"
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-
-
-
-                  {/* Streak */}
-                  <div className="relative">
-                    <AnimatePresence>
-                      {dailyBonus && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.5 }}
-                          animate={{ opacity: 1, y: -20, scale: 1 }}
-                          exit={{ opacity: 0, y: -30 }}
-                          className="absolute -top-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-yellow-900 text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-lg z-50 whitespace-nowrap pointer-events-none"
-                        >
-                          +{dailyBonus.amount} XP
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                    <motion.div
-                      className="flex items-center gap-2 border-r border-theme-border pr-4 cursor-pointer group/flame"
-                      title="Sequência de 🔥 (Streak)"
-                      whileHover={{ scale: 1.1 }}
-                    >
-                      <motion.div
-                        animate={{
-                          scale: [1, 1.15, 0.95, 1],
-                          rotate: [0, -3, 3, 0],
-                        }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        className="relative"
-                      >
-                        <Flame
-                          className={`w-5 h-5 ${dailyBonus ? 'text-yellow-400 fill-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]' : 'text-orange-500 fill-orange-500/20 group-hover/flame:fill-orange-500 group-hover/flame:drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]'} transition-all duration-300`}
-                        />
-                      </motion.div>
-                      <span className={`font-display font-bold ${dailyBonus ? 'text-yellow-400' : 'text-theme-text-secondary group-hover/flame:text-orange-500'} transition-colors`}>{streak}</span>
-                    </motion.div>
-                  </div>
-
-                  {/* Level & XP */}
-                  <motion.div
-                    className="flex flex-col w-32 gap-1 cursor-pointer"
-                    whileHover={{ scale: 1.05 }}
-                    title={`${score} XP Total`}
-                  >
-                    <div className="flex justify-between text-[10px] font-mono uppercase text-theme-text-tertiary">
-                      <span className="font-bold text-theme-text-primary">Lvl {level}</span>
-                      <span className="text-green-400 font-bold">{userScore} XP</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-theme-bg-secondary rounded-full overflow-hidden border border-theme-border">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${xpPercentage}%` }}
-                        className="h-full bg-gradient-to-r from-green-500 to-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]"
-                      />
-                    </div>
-                  </motion.div>
-                </motion.div>
-
-                {/* Avatar Profile with XP Ring */}
-                <div className="flex items-center gap-3 pl-2 border-l border-theme-border/50">
-                  <div className="text-right hidden md:block">
-                    <div className="text-sm font-bold text-theme-text-primary font-display">{user.name}</div>
-                    <div className="text-xs text-green-400 font-medium">{currentLevel.title}</div>
-                  </div>
-
-                  <div
-                    onClick={() => setIsCharacterSelectorOpen(true)}
-                    className="relative group cursor-pointer"
-                    title="Clique para trocar de personagem"
-                  >
-                    {/* Glowing Background */}
-                    <div className="absolute inset-0 bg-green-500 rounded-full blur-md opacity-0 group-hover:opacity-30 transition-opacity duration-500" />
-
-                    {/* XP Progress Ring Container */}
-                    <div className="relative w-[52px] h-[52px] flex items-center justify-center">
-                      {/* Pulsing SVG Ring */}
-                      <motion.svg
-                        className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none overflow-visible"
-                        animate={{
-                          scale: [1, 1.1, 1],
-                          opacity: [0.8, 1, 0.8],
-                          filter: [`drop-shadow(0 0 2px ${aura.middle})`, `drop-shadow(0 0 6px ${aura.middle})`, `drop-shadow(0 0 2px ${aura.middle})`]
-                        }}
-                        transition={{
-                          duration: 3,
-                          repeat: Infinity,
-                          ease: "easeInOut"
-                        }}
-                      >
-                        {/* Track */}
-                        <circle
-                          cx="26" cy="26" r="24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          className="text-theme-border opacity-30"
-                        />
-                        {/* Solid Progress Line */}
-                        <motion.circle
-                          cx="26" cy="26" r="24"
-                          fill="none"
-                          stroke={aura.middle}
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          initial={{ pathLength: 0 }}
-                          animate={{ pathLength: xpPercentage / 100 }}
-                          transition={{ duration: 1.5, ease: "easeOut" }}
-                        />
-                      </motion.svg>
-
-                      {/* Avatar Image */}
-                      <TiltContainer intensity={20} className="w-10 h-10 z-10">
-                        <div
-                          className="w-full h-full bg-theme-bg-secondary rounded-full flex items-center justify-center overflow-hidden border-2 shadow-inner relative transition-colors duration-500"
-                          style={{ borderColor: aura.middle }}
-                        >
-                          <img
-                            src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.avatar !== 'default' ? user.avatar : user.name}`}
-                            alt="Avatar"
-                            className="w-full h-full object-cover transform scale-110"
-                          />
-                        </div>
-                      </TiltContainer>
-
-                      {/* Level Badge Pill */}
-                      <div className="absolute -bottom-1 z-20 bg-theme-bg-tertiary text-[9px] font-black px-1.5 py-px rounded-full border border-theme-border text-theme-text-primary shadow-lg leading-none backdrop-blur-md">
-                        {level}
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => { handleLogout(); playClick(); }}
-
-                    className="p-2 rounded-lg hover:bg-red-500/10 text-theme-text-secondary hover:text-red-500 transition-all duration-300 group ml-1"
-                    title="Sair"
-                  >
-                    <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <Link
-                to="/login"
-                onClick={() => { playClick(); }}
-
-                className="hidden md:flex items-center gap-2 btn-neon-primary"
-              >
-                <Zap className="w-4 h-4 text-[color:var(--header-contrast)] fill-[color:var(--header-contrast)]" />
-                ACESSAR SISTEMA
-              </Link>
-            )}
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2 hover:bg-theme-bg-tertiary rounded-lg transition-colors text-theme-text-secondary"
-              onClick={() => { setIsMenuOpen(!isMenuOpen); playClick(); }}
-            >
-              {isMenuOpen ? <X /> : <Menu />}
-            </button>
           </div>
         </div>
       </div>
+      </header >
+    );
+  }
 
-      {/* Mobile Menu Drawer */}
-      <AnimatePresence>
-        {isMenuOpen && createPortal(
+return (
+  <header
+    className="bg-[var(--theme-backdrop)] backdrop-blur-md border-b border-theme-border sticky top-0 z-50 transition-all duration-300"
+    style={headerStyle}
+  >
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+
+      {/* --- MOBILE LAYOUT (md:hidden) --- */}
+      <div className="flex md:hidden items-center justify-between h-16 w-full">
+        {/* Left Group: Menu + Brand + Avatar/Theme */}
+        <div className="flex items-center gap-2 sm:gap-4 overflow-hidden">
+          {/* 1. Menu Button (Hamburger) */}
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className={mobileBtnClass}
+            aria-label="Abrir menu"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+
+          {/* 2. Logo (Icon only on very small, Full on small+) */}
+          <Link to="/" className="flex items-center gap-1 shrink-0">
+            <div className="w-8 h-8 bg-gradient-to-br from-theme-bg-tertiary to-theme-bg-secondary rounded-lg border border-theme-border flex items-center justify-center shadow-sm">
+              <span className="terra-girando text-lg leading-none">&#x1F30D;</span>
+            </div>
+            <span className="font-display font-bold text-lg hidden sm:block">
+              ECO<span className="text-green-400">PLAY</span>
+            </span>
+          </Link>
+
+          {/* 2b. Avatar & Theme (Hide on very narrow screens < 340px) */}
+          <div className="flex items-center gap-2 border-l border-theme-border/50 pl-2 ml-1">
+            {user && (
+              <div className="w-8 h-8 rounded-full bg-theme-bg-tertiary border border-theme-border overflow-hidden shrink-0">
+                <img
+                  src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.avatar !== 'default' ? user.avatar : user.name}`}
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <div className="scale-75 origin-left">
+              <ThemeToggle />
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Extreme Right: Logout Button */}
+        <div className="flex items-center pl-2">
+          {user ? (
+            <button
+              onClick={handleLogout}
+              className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+              title="Sair"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          ) : (
+            <Link to="/login" className="text-sm font-bold text-green-400 hover:underline">
+              ENTRAR
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* --- DESKTOP LAYOUT (hidden md:flex) --- */}
+      <div className="hidden md:flex justify-between items-center h-20">
+        {/* Logo HUD Style */}
+        <Link to="/" className="flex items-center gap-3 group relative shrink-0">
+          <div className="absolute inset-0 bg-green-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="bg-gradient-to-br from-theme-bg-tertiary to-theme-bg-secondary p-2.5 rounded-xl border border-theme-border shadow-lg group-hover:scale-105 transition-transform relative z-10 flex items-center justify-center">
+            <span className="terra-girando text-2xl leading-none">&#x1F30D;</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-display font-bold text-2xl tracking-wide text-theme-text-primary leading-none">
+              ECO<span className="text-green-400">PLAY</span>
+            </span>
+          </div>
+        </Link>
+
+        {/* Desktop Nav HUD */}
+        <nav className="grid grid-flow-col auto-cols-fr gap-2 bg-theme-bg-tertiary p-1.5 rounded-full border border-theme-border backdrop-blur-md">
+          <Link to="/" className="flex items-center justify-center px-6 py-2 rounded-full text-theme-text-primary hover:text-green-400 hover:bg-green-500/10 hover:shadow-lg hover:shadow-[0_0_18px_rgba(74,222,128,0.3)] font-medium transition-all duration-300 text-sm font-display relative group overflow-hidden whitespace-nowrap">
+            <span className="relative z-10">BASE</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </Link>
+          <Link to="/games" className="flex items-center justify-center px-6 py-2 rounded-full text-theme-text-primary hover:text-green-400 hover:bg-green-500/10 hover:shadow-lg hover:shadow-[0_0_18px_rgba(74,222,128,0.3)] font-medium transition-all duration-300 text-sm font-display relative group overflow-hidden whitespace-nowrap">
+            <span className="relative z-10">JOGOS</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </Link>
+          {user && (
+            <Link to="/dashboard" className="flex items-center justify-center px-6 py-2 rounded-full text-theme-text-primary hover:text-green-400 hover:bg-green-500/10 hover:shadow-lg hover:shadow-[0_0_18px_rgba(74,222,128,0.3)] font-medium transition-all duration-300 text-sm font-display relative group overflow-hidden whitespace-nowrap">
+              <span className="relative z-10">PAINEL</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </Link>
+          )}
+          {canShowFeedbackCta && (
+            <Link to="/avaliacao" onClick={() => { handleFeedbackClick(); playClick(); }} className="flex items-center justify-center px-6 py-2 rounded-full text-theme-text-primary hover:text-green-400 hover:bg-green-500/10 hover:shadow-lg hover:shadow-[0_0_18px_rgba(74,222,128,0.3)] font-medium transition-all duration-300 text-sm font-display relative group overflow-hidden whitespace-nowrap">
+              <span className="relative z-10">AVALIE</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </Link>
+          )}
+        </nav>
+
+        {/* User Stats & Auth Buttons */}
+        <div className="flex items-center gap-4">
+          <ThemeToggle className="shrink-0" />
+          {user ? (
+            <div className="flex items-center gap-4">
+              {/* HUD Stats Panel */}
+              <motion.div
+                className="hidden lg:flex items-center gap-4 bg-theme-bg-tertiary hover:bg-theme-bg-secondary text-theme-text-primary px-4 py-2 rounded-xl border border-theme-border hover:border-green-500/30 backdrop-blur-md shadow-lg cursor-default transition-colors duration-300"
+                whileHover={{ scale: 1.02 }}
+              >
+                <div className="relative">
+                  <AnimatePresence>
+                    {dailyBonus && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.5 }}
+                        animate={{ opacity: 1, y: -20, scale: 1 }}
+                        exit={{ opacity: 0, y: -30 }}
+                        className="absolute -top-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-yellow-900 text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-lg z-50 whitespace-nowrap pointer-events-none"
+                      >
+                        +{dailyBonus.amount} XP
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <div className="flex items-center gap-2 border-r border-theme-border pr-4 cursor-pointer group/flame" title="Sequência de 🔥">
+                    <Flame className={`w-5 h-5 ${dailyBonus ? 'text-yellow-400 fill-yellow-400' : 'text-orange-500 fill-orange-500/20'} transition-all`} />
+                    <span className="font-display font-bold">{streak}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col w-32 gap-1 cursor-pointer" title={`${score} XP Total`}>
+                  <div className="flex justify-between text-[10px] font-mono uppercase text-theme-text-tertiary">
+                    <span className="font-bold text-theme-text-primary">Lvl {level}</span>
+                    <span className="text-green-400 font-bold">{userScore} XP</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-theme-bg-secondary rounded-full overflow-hidden border border-theme-border">
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${xpPercentage}%` }} className="h-full bg-gradient-to-r from-green-500 to-green-400" />
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Avatar Profile */}
+              <div className="flex items-center gap-3 pl-2 border-l border-theme-border/50">
+                <div className="text-right hidden xl:block">
+                  <div className="text-sm font-bold text-theme-text-primary font-display">{user.name}</div>
+                  <div className="text-xs text-green-400 font-medium">{currentLevel.title}</div>
+                </div>
+                <div onClick={() => setIsCharacterSelectorOpen(true)} className="relative group cursor-pointer w-[52px] h-[52px] flex items-center justify-center">
+                  <TiltContainer intensity={20} className="w-10 h-10 z-10">
+                    <div className="w-full h-full bg-theme-bg-secondary rounded-full border-2 border-green-500 overflow-hidden">
+                      <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.avatar !== 'default' ? user.avatar : user.name}`} alt="Avatar" className="w-full h-full object-cover scale-110" />
+                    </div>
+                  </TiltContainer>
+                  <div className="absolute -bottom-1 z-20 bg-theme-bg-tertiary text-[9px] font-black px-1.5 py-px rounded-full border border-theme-border">{level}</div>
+                </div>
+                <button onClick={() => { handleLogout(); playClick(); }} className="p-2 rounded-lg hover:bg-red-500/10 text-theme-text-secondary hover:text-red-500 transition-all group ml-1" title="Sair">
+                  <LogOut className="w-5 h-5 group-hover:scale-110" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <Link to="/login" className="flex items-center gap-2 btn-neon-primary">
+              <Zap className="w-4 h-4" /> ACESSAR
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
+
+    {/* --- SIDE DRAWER MENU (Mobile) --- */}
+    <AnimatePresence>
+      {isMenuOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex md:hidden">
+          {/* 1. Backdrop Overlay (Dark & Blur) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[9999] bg-theme-bg-primary/95 backdrop-blur-2xl md:hidden overflow-y-auto"
+            onClick={() => setIsMenuOpen(false)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          />
+
+          {/* 2. Side Panel (Slide In) */}
+          <motion.div
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="relative w-[80%] max-w-sm h-full bg-theme-bg-tertiary border-r border-theme-border shadow-2xl overflow-y-auto flex flex-col"
           >
-            {/* Header inside Menu for styling consistency */}
-            <div className="flex items-center justify-between p-4 border-b border-theme-border/50">
-              <span className="font-display font-bold text-xl text-theme-text-primary">Menu</span>
-              <button
-                onClick={() => setIsMenuOpen(false)}
-                className="p-2 hover:bg-theme-bg-tertiary rounded-lg text-theme-text-secondary"
-              >
-                <X />
-              </button>
+            {/* Header of Drawer */}
+            <div className="p-6 border-b border-theme-border/50 bg-theme-bg-secondary/50">
+              <div className="flex items-center justify-between mb-6">
+                <span className="font-display font-bold text-xl text-theme-text-primary">Menu</span>
+                <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-theme-bg-primary rounded-full hover:bg-red-500/10 hover:text-red-400 transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Player Status (Highlight) */}
+              {user && (
+                <div className="flex gap-4">
+                  {/* Streak Box */}
+                  <div className="flex-1 bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-3 flex flex-col items-center justify-center">
+                    <Flame className="w-6 h-6 text-orange-500 mb-1" />
+                    <span className="text-xs text-theme-text-secondary font-bold uppercase">Sequência</span>
+                    <span className="text-lg font-black text-theme-text-primary">{streak} Dias</span>
+                  </div>
+                  {/* XP Box */}
+                  <div className="flex-1 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-3 flex flex-col items-center justify-center">
+                    <Trophy className="w-6 h-6 text-green-400 mb-1" />
+                    <span className="text-xs text-theme-text-secondary font-bold uppercase">Nível {level}</span>
+                    <span className="text-lg font-black text-theme-text-primary">{score} XP</span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <nav className="flex flex-col p-6 gap-4">
-              <Link
-                to="/"
-                onClick={() => setIsMenuOpen(false)}
-                className="p-4 rounded-2xl bg-theme-bg-tertiary/50 border border-theme-border text-center text-theme-text-primary font-bold text-lg hover:bg-theme-bg-secondary transition-colors"
-              >
-                BASE
-              </Link>
-              <Link
-                to="/games"
-                onClick={() => setIsMenuOpen(false)}
-                className="p-4 rounded-2xl bg-theme-bg-tertiary/50 border border-theme-border text-center text-theme-text-primary font-bold text-lg hover:bg-theme-bg-secondary transition-colors"
-              >
-                JOGOS
-              </Link>
-              <Link
-                to="/about"
-                onClick={() => setIsMenuOpen(false)}
-                className="p-4 rounded-2xl bg-theme-bg-tertiary/50 border border-theme-border text-center text-theme-text-primary font-bold text-lg hover:bg-theme-bg-secondary transition-colors"
-              >
-                SOBRE
+            {/* Navigation Links */}
+            <nav className="flex-1 p-6 space-y-3">
+              <Link to="/" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-xl bg-theme-bg-primary border border-theme-border font-bold text-theme-text-primary hover:border-green-400/50 transition-all group">
+                <div className="w-10 h-10 rounded-lg bg-theme-bg-secondary flex items-center justify-center group-hover:bg-green-500/10 group-hover:text-green-400 transition-colors">
+                  <Home size={20} />
+                </div>
+                <span className="text-lg">Início</span>
               </Link>
 
-              {canShowFeedbackCta && (
-                <Link
-                  to="/avaliacao"
-                  onClick={() => {
-                    handleFeedbackClick();
-                    setIsMenuOpen(false);
-                  }}
-                  className="p-4 rounded-2xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 text-center text-green-400 font-bold text-lg hover:bg-green-500/20 transition-colors"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <Star className="w-5 h-5 fill-current" />
-                    NOS AVALIE
+              <Link to="/games" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-xl bg-theme-bg-primary border border-theme-border font-bold text-theme-text-primary hover:border-green-400/50 transition-all group">
+                <div className="w-10 h-10 rounded-lg bg-theme-bg-secondary flex items-center justify-center group-hover:bg-green-500/10 group-hover:text-green-400 transition-colors">
+                  <Gamepad2 size={20} />
+                </div>
+                <span className="text-lg">Jogos</span>
+              </Link>
+
+              <Link to="/leaderboard" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-xl bg-theme-bg-primary border border-theme-border font-bold text-theme-text-primary hover:border-green-400/50 transition-all group">
+                <div className="w-10 h-10 rounded-lg bg-theme-bg-secondary flex items-center justify-center group-hover:bg-green-500/10 group-hover:text-green-400 transition-colors">
+                  <Trophy size={20} />
+                </div>
+                <span className="text-lg">Ranking</span>
+              </Link>
+
+              {user && (
+                <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-xl bg-theme-bg-primary border border-theme-border font-bold text-theme-text-primary hover:border-green-400/50 transition-all group">
+                  <div className="w-10 h-10 rounded-lg bg-theme-bg-secondary flex items-center justify-center group-hover:bg-green-500/10 group-hover:text-green-400 transition-colors">
+                    <User size={20} />
                   </div>
+                  <span className="text-lg">Meu Perfil</span>
                 </Link>
               )}
-
-              {user ? (
-                <div className="mt-4 pt-4 border-t border-theme-border/50">
-                  <div className="bg-theme-bg-secondary/50 border border-theme-border rounded-2xl p-4 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-theme-border shadow-lg">
-                          <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.name}`} alt="Avatar" className="w-full h-full bg-theme-bg-tertiary" />
-                        </div>
-                        <div className="absolute -bottom-1 -right-1 bg-theme-bg-tertiary text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-theme-border shadow-sm">
-                          Lvl {level}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="font-bold text-theme-text-primary text-lg leading-tight">{user.name}</div>
-                        <div className="text-xs text-green-400 font-mono">{score} XP</div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <Link
-                        to="/dashboard"
-                        onClick={() => setIsMenuOpen(false)}
-                        className="flex items-center justify-center gap-2 py-3 bg-theme-bg-primary rounded-xl border border-theme-border text-sm font-bold text-theme-text-primary hover:text-green-400 transition-colors"
-                      >
-                        <Trophy className="w-4 h-4" />
-                        Painel
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center justify-center gap-2 py-3 bg-red-500/10 rounded-xl border border-red-500/20 text-sm font-bold text-red-400 hover:bg-red-500/20 transition-colors"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Sair
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-auto">
-                  <Link
-                    to="/login"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      playNavigation();
-                    }}
-                    className="block w-full py-4 text-center rounded-2xl bg-[color:var(--header-accent)] text-[color:var(--header-contrast)] font-bold text-lg shadow-lg hover:brightness-110 active:scale-95 transition-all"
-                  >
-                    ACESSAR SISTEMA
-                  </Link>
-                </div>
-              )}
             </nav>
-          </motion.div>,
-          document.body
-        )}
-      </AnimatePresence>
 
-      <CharacterSelector
-        isOpen={isCharacterSelectorOpen}
-        onClose={() => setIsCharacterSelectorOpen(false)}
-      />
-    </header>
-  );
+            {/* Drawer Footer */}
+            <div className="p-6 border-t border-theme-border bg-theme-bg-secondary/30">
+              {canShowFeedbackCta && (
+                <Link to="/avaliacao" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-green-500/10 text-green-400 font-bold border border-green-500/20 hover:bg-green-500/20 transition-colors">
+                  <Star size={18} /> Nos Avalie
+                </Link>
+              )}
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
+    </AnimatePresence>
+
+    <CharacterSelector
+      isOpen={isCharacterSelectorOpen}
+      onClose={() => setIsCharacterSelectorOpen(false)}
+    />
+  </header>
+);
 };
 
 export default Header;
