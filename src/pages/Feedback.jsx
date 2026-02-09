@@ -703,7 +703,7 @@ const Feedback = () => {
             </motion.div>
           )}
         </AnimatePresence>
-      </div >
+      </div>
       );
 };
 
