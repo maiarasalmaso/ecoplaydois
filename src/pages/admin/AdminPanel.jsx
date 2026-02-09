@@ -337,8 +337,19 @@ const AdminPanel = () => {
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="text-theme-text-secondary italic text-sm p-2 rounded bg-theme-bg-primary/50 border border-theme-border/50">
-                                "{f.comment}"
+                              <div className="flex flex-col gap-1 text-theme-text-secondary text-sm p-2 rounded bg-theme-bg-primary/50 border border-theme-border/50">
+                                {f.ux?.ux_open_like ? (
+                                  <div><span className="font-bold text-emerald-500/80 text-xs uppercase mr-1">Gostou:</span>{f.ux.ux_open_like}</div>
+                                ) : null}
+                                {f.ux?.ux_open_improve ? (
+                                  <div><span className="font-bold text-amber-500/80 text-xs uppercase mr-1">Melhorar:</span>{f.ux.ux_open_improve}</div>
+                                ) : null}
+                                {f.ux?.ux_open_ideas ? (
+                                  <div><span className="font-bold text-blue-500/80 text-xs uppercase mr-1">Ideia:</span>{f.ux.ux_open_ideas}</div>
+                                ) : null}
+                                {!f.ux?.ux_open_like && !f.ux?.ux_open_improve && !f.ux?.ux_open_ideas && (
+                                  <div className="italic opacity-50 text-center">Sem comentário escrito</div>
+                                )}
                               </div>
                             </td>
                             <td className="px-6 py-4 text-theme-text-tertiary text-sm">
