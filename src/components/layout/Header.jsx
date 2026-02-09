@@ -350,11 +350,11 @@ const Header = () => {
       <AnimatePresence>
         {isMenuOpen && createPortal(
           <motion.div
-            initial={{ opacity: 0, x: '100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed inset-0 top-[80px] z-[60] bg-theme-bg-primary/95 backdrop-blur-2xl md:hidden overflow-y-auto border-t border-theme-border"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-20 left-0 right-0 bottom-0 z-[9999] bg-theme-bg-tertiary md:hidden overflow-y-auto border-t border-theme-border"
           >
             <nav className="flex flex-col p-6 gap-4 min-h-[calc(100vh-80px)]">
               <div className="flex items-center gap-2 mb-4 opacity-50">
