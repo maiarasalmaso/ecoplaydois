@@ -345,22 +345,45 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Drawer */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-theme-bg-primary border-t border-theme-border"
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="fixed inset-0 top-[80px] z-40 bg-theme-bg-primary/95 backdrop-blur-2xl md:hidden overflow-y-auto border-t border-theme-border"
           >
-            <nav className="flex flex-col p-4 gap-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-theme-text-secondary text-sm font-mono uppercase">Menu</span>
+            <nav className="flex flex-col p-6 gap-4 min-h-[calc(100vh-80px)]">
+              <div className="flex items-center gap-2 mb-4 opacity-50">
+                <div className="h-px bg-theme-border flex-1" />
+                <span className="text-xs font-mono uppercase tracking-widest">Navegação</span>
+                <div className="h-px bg-theme-border flex-1" />
               </div>
-              <Link to="/" onClick={() => setIsMenuOpen(false)} className="text-theme-text-primary hover:text-green-400 font-medium font-display">BASE</Link>
-              <Link to="/games" onClick={() => setIsMenuOpen(false)} className="text-theme-text-primary hover:text-green-400 font-medium font-display">JOGOS</Link>
-              <Link to="/about" onClick={() => setIsMenuOpen(false)} className="text-theme-text-primary hover:text-green-400 font-medium font-display">SOBRE</Link>
+
+              <Link
+                to="/"
+                onClick={() => setIsMenuOpen(false)}
+                className="p-4 rounded-2xl bg-theme-bg-tertiary/50 border border-theme-border text-center text-theme-text-primary font-bold text-lg hover:bg-theme-bg-secondary transition-colors"
+              >
+                BASE
+              </Link>
+              <Link
+                to="/games"
+                onClick={() => setIsMenuOpen(false)}
+                className="p-4 rounded-2xl bg-theme-bg-tertiary/50 border border-theme-border text-center text-theme-text-primary font-bold text-lg hover:bg-theme-bg-secondary transition-colors"
+              >
+                JOGOS
+              </Link>
+              <Link
+                to="/about"
+                onClick={() => setIsMenuOpen(false)}
+                className="p-4 rounded-2xl bg-theme-bg-tertiary/50 border border-theme-border text-center text-theme-text-primary font-bold text-lg hover:bg-theme-bg-secondary transition-colors"
+              >
+                SOBRE
+              </Link>
+
               {canShowFeedbackCta && (
                 <Link
                   to="/avaliacao"
@@ -368,59 +391,65 @@ const Header = () => {
                     handleFeedbackClick();
                     setIsMenuOpen(false);
                   }}
-                  className="text-theme-text-primary hover:text-green-400 font-medium font-display"
+                  className="p-4 rounded-2xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 text-center text-green-400 font-bold text-lg hover:bg-green-500/20 transition-colors"
                 >
-                  NOS AVALIE
+                  <div className="flex items-center justify-center gap-2">
+                    <Star className="w-5 h-5 fill-current" />
+                    NOS AVALIE
+                  </div>
                 </Link>
               )}
 
               {user ? (
-                <>
-                  <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="text-theme-text-primary hover:text-green-400 font-medium font-display">PAINEL</Link>
-                  <div className="border-t border-theme-border pt-4 flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-theme-bg-tertiary rounded-full overflow-hidden border border-theme-border">
-                        <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.name}`} alt="Avatar" />
+                <div className="mt-auto pt-6">
+                  <div className="bg-theme-bg-secondary/50 border border-theme-border rounded-2xl p-4 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-theme-border shadow-lg">
+                          <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.name}`} alt="Avatar" className="w-full h-full bg-theme-bg-tertiary" />
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 bg-theme-bg-tertiary text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-theme-border shadow-sm">
+                          Lvl {level}
+                        </div>
                       </div>
-                      <span className="font-semibold text-theme-text-primary font-display">{user.name}</span>
+                      <div>
+                        <div className="font-bold text-theme-text-primary text-lg leading-tight">{user.name}</div>
+                        <div className="text-xs text-green-400 font-mono">{score} XP</div>
+                      </div>
                     </div>
-                    <button
-                      onClick={handleLogout}
-                      className="px-4 py-1.5 rounded-lg font-black tracking-widest uppercase text-[11px] transition-all"
-                      style={{
-                        backgroundColor: '#ff0000',
-                        color: '#ffffff',
-                        boxShadow: '0 0 15px rgba(255, 0, 0, 0.6)',
-                        border: 'none'
-                      }}
-                    >
-                      Sair
-                    </button>
-                  </div>
-                  {/* Offline mode indicator removed */}
-                  <div className="bg-theme-bg-secondary text-theme-text-primary p-3 rounded-lg mt-2 flex justify-between items-center border border-theme-border">
-                    <div className="flex items-center gap-1">
-                      <div className={`w-2 h-2 rounded-full ${!isOfflineMode ? 'bg-[color:var(--header-accent)]' : 'bg-red-500'}`} />
 
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link
+                        to="/dashboard"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center justify-center gap-2 py-3 bg-theme-bg-primary rounded-xl border border-theme-border text-sm font-bold text-theme-text-primary hover:text-green-400 transition-colors"
+                      >
+                        <Trophy className="w-4 h-4" />
+                        Painel
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center justify-center gap-2 py-3 bg-red-500/10 rounded-xl border border-red-500/20 text-sm font-bold text-red-400 hover:bg-red-500/20 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sair
+                      </button>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4 text-[color:var(--header-accent-2)]" />
-                      <span className="font-mono text-sm">{streak} dias</span>
-                    </div>
-                    <span className="font-mono text-[color:var(--header-accent)] text-sm">{score} XP</span>
                   </div>
-                </>
+                </div>
               ) : (
-                <Link
-                  to="/login"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    playNavigation();
-                  }}
-                  className="bg-[color:var(--header-accent)] text-[color:var(--header-contrast)] text-center py-3 rounded-lg font-display font-bold hover:brightness-110 transition-colors"
-                >
-                  ACESSAR SISTEMA
-                </Link>
+                <div className="mt-auto">
+                  <Link
+                    to="/login"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      playNavigation();
+                    }}
+                    className="block w-full py-4 text-center rounded-2xl bg-[color:var(--header-accent)] text-[color:var(--header-contrast)] font-bold text-lg shadow-lg hover:brightness-110 active:scale-95 transition-all"
+                  >
+                    ACESSAR SISTEMA
+                  </Link>
+                </div>
               )}
             </nav>
           </motion.div>
