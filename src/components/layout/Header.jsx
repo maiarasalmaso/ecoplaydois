@@ -176,7 +176,7 @@ const Header = () => {
             {/* Server Status Indicator moved to Footer */}
 
             {user ? (
-              <div className="flex items-center gap-4">
+              <div className="hidden md:flex items-center gap-4">
                 {/* HUD Stats Panel */}
                 <motion.div
                   className="hidden lg:flex items-center gap-4 bg-theme-bg-tertiary hover:bg-theme-bg-secondary text-theme-text-primary px-4 py-2 rounded-xl border border-theme-border hover:border-green-500/30 backdrop-blur-md shadow-lg cursor-default transition-colors duration-300"
@@ -336,127 +336,10 @@ const Header = () => {
               </Link>
             )}
 
-            <button
-              className="md:hidden p-2 hover:bg-theme-bg-tertiary rounded-lg transition-colors text-theme-text-secondary"
-              onClick={() => { setIsMenuOpen(!isMenuOpen); playClick(); }}
-            >
-              {isMenuOpen ? <X /> : <Menu />}
-            </button>
+            {/* Mobile Menu Button Removed (Moved to Dock) */}
           </div>
         </div>
       </div>
-
-      {/* Mobile Menu Drawer */}
-      <AnimatePresence>
-        {isMenuOpen && createPortal(
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed top-20 left-0 right-0 bottom-0 z-[9999] bg-theme-bg-tertiary md:hidden overflow-y-auto border-t border-theme-border"
-          >
-            <nav className="flex flex-col p-6 gap-4 min-h-[calc(100vh-80px)]">
-              <div className="flex items-center gap-2 mb-4 opacity-50">
-                <div className="h-px bg-theme-border flex-1" />
-                <span className="text-xs font-mono uppercase tracking-widest">Navegação</span>
-                <div className="h-px bg-theme-border flex-1" />
-              </div>
-
-              <Link
-                to="/"
-                onClick={() => setIsMenuOpen(false)}
-                className="p-4 rounded-2xl bg-theme-bg-tertiary/50 border border-theme-border text-center text-theme-text-primary font-bold text-lg hover:bg-theme-bg-secondary transition-colors"
-              >
-                BASE
-              </Link>
-              <Link
-                to="/games"
-                onClick={() => setIsMenuOpen(false)}
-                className="p-4 rounded-2xl bg-theme-bg-tertiary/50 border border-theme-border text-center text-theme-text-primary font-bold text-lg hover:bg-theme-bg-secondary transition-colors"
-              >
-                JOGOS
-              </Link>
-              <Link
-                to="/about"
-                onClick={() => setIsMenuOpen(false)}
-                className="p-4 rounded-2xl bg-theme-bg-tertiary/50 border border-theme-border text-center text-theme-text-primary font-bold text-lg hover:bg-theme-bg-secondary transition-colors"
-              >
-                SOBRE
-              </Link>
-
-              {canShowFeedbackCta && (
-                <Link
-                  to="/avaliacao"
-                  onClick={() => {
-                    handleFeedbackClick();
-                    setIsMenuOpen(false);
-                  }}
-                  className="p-4 rounded-2xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 text-center text-green-400 font-bold text-lg hover:bg-green-500/20 transition-colors"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <Star className="w-5 h-5 fill-current" />
-                    NOS AVALIE
-                  </div>
-                </Link>
-              )}
-
-              {user ? (
-                <div className="mt-auto pt-6">
-                  <div className="bg-theme-bg-secondary/50 border border-theme-border rounded-2xl p-4 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-theme-border shadow-lg">
-                          <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.name}`} alt="Avatar" className="w-full h-full bg-theme-bg-tertiary" />
-                        </div>
-                        <div className="absolute -bottom-1 -right-1 bg-theme-bg-tertiary text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-theme-border shadow-sm">
-                          Lvl {level}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="font-bold text-theme-text-primary text-lg leading-tight">{user.name}</div>
-                        <div className="text-xs text-green-400 font-mono">{score} XP</div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <Link
-                        to="/dashboard"
-                        onClick={() => setIsMenuOpen(false)}
-                        className="flex items-center justify-center gap-2 py-3 bg-theme-bg-primary rounded-xl border border-theme-border text-sm font-bold text-theme-text-primary hover:text-green-400 transition-colors"
-                      >
-                        <Trophy className="w-4 h-4" />
-                        Painel
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center justify-center gap-2 py-3 bg-red-500/10 rounded-xl border border-red-500/20 text-sm font-bold text-red-400 hover:bg-red-500/20 transition-colors"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Sair
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-auto">
-                  <Link
-                    to="/login"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      playNavigation();
-                    }}
-                    className="block w-full py-4 text-center rounded-2xl bg-[color:var(--header-accent)] text-[color:var(--header-contrast)] font-bold text-lg shadow-lg hover:brightness-110 active:scale-95 transition-all"
-                  >
-                    ACESSAR SISTEMA
-                  </Link>
-                </div>
-              )}
-            </nav>
-          </motion.div>,
-          document.body
-        )}
-      </AnimatePresence>
 
       <CharacterSelector
         isOpen={isCharacterSelectorOpen}
