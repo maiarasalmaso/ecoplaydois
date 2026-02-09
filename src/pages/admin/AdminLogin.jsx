@@ -12,13 +12,125 @@ const DEFAULT_PASSWORD = '';
 // ... (keep constants)
 
 const AdminLogin = () => {
-  // ... (keep hooks)
+  const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
+  const { theme } = useTheme();
 
   const [login, setLogin] = useState(DEFAULT_LOGIN);
   const [password, setPassword] = useState(DEFAULT_PASSWORD);
-  // ... (keep props)
+  const [remember, setRemember] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [lockedUntil, setLockedUntil] = useState(() => getRateState().lockedUntil || 0);
+  const lockTimerRef = useRef(null);
 
-  // ... (keep useEffects)
+  const isLight = theme === 'light';
+  const accent = isLight ? ADMIN_ACCENT.light : ADMIN_ACCENT.dark;
+  const contrast = isLight ? '#f8fafc' : '#0b1323';
+
+  const lockSeconds = useMemo(() => {
+    if (!lockedUntil) return 0;
+    const diff = lockedUntil - nowMs();
+    return diff > 0 ? Math.ceil(diff / 1000) : 0;
+  }, [lockedUntil]);
+
+  useEffect(() => {
+    const remembered = readJson(ADMIN_REMEMBER_KEY);
+    if (remembered?.login) setLogin(String(remembered.login));
+    if (remembered?.remember === true) setRemember(true);
+  }, []);
+
+  useEffect(() => {
+    const state = getRateState();
+    setLockedUntil(state.lockedUntil || 0);
+
+    if (lockTimerRef.current) {
+      clearInterval(lockTimerRef.current);
+      lockTimerRef.current = null;
+    }
+
+    if (!state.lockedUntil) return undefined;
+
+    lockTimerRef.current = setInterval(() => {
+      const next = getRateState().lockedUntil || 0;
+      setLockedUntil(next);
+      if (!next || nowMs() >= next) {
+        clearInterval(lockTimerRef.current);
+        lockTimerRef.current = null;
+      }
+    }, 250);
+
+    return () => {
+      if (lockTimerRef.current) clearInterval(lockTimerRef.current);
+      lockTimerRef.current = null;
+    };
+  }, []);
+
+  const validate = () => {
+    const l = normalize(login);
+    const p = normalize(password);
+    if (!l || !p) {
+      setError('Preencha login e senha.');
+      return null;
+    }
+    if (!isEmail(l)) {
+      setError('Informe um email válido.');
+      return null;
+    }
+    return { login: l, password: p };
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    const state = getRateState();
+    const now = nowMs();
+    if (isLocked(state, now)) {
+      setLockedUntil(state.lockedUntil);
+      appendAudit('login_rate_limited', { login: normalize(login) });
+      setError(`Muitas tentativas. Aguarde ${Math.ceil((state.lockedUntil - now) / 1000)}s.`);
+      return;
+    }
+
+    const values = validate();
+    if (!values) {
+      appendAudit('login_validation_error', { login: normalize(login) });
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      await authLogin(values.login, values.password);
+
+      const token = localStorage.getItem('ecoplay_token');
+      if (token) {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(decodeURIComponent(window.atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+
+        if (payload.role !== 'ADMIN') {
+          throw new Error('Acesso negado: Apenas administradores.');
+        }
+
+        appendAudit('login_success', { login: values.login });
+        navigate('/admin/painel', { replace: true });
+      }
+    } catch (err) {
+      console.error(err);
+      const next = registerFailure();
+      setLockedUntil(next.lockedUntil || 0);
+      const msg = err.response?.data?.error || err.message || 'Falha no login.';
+      setError(msg);
+      appendAudit('login_failure', { login: values.login, error: msg });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const MotionDiv = motion.div;
+  const locked = lockSeconds > 0;
 
   return (
     <div
