@@ -119,6 +119,12 @@ const Login = () => {
           <>
             {/* Login Form */}
             <form className="mt-8 space-y-6" onSubmit={handleSubmit} autoComplete="off">
+              {/* Dummy inputs to trick browser autofill */}
+              <div style={{ display: 'none' }}>
+                <input type="text" autoComplete="new-password" name="fake_email" />
+                <input type="password" autoComplete="new-password" name="fake_password" />
+              </div>
+
               {error && (
                 <MotionDiv
                   initial={{ opacity: 0, x: -20 }}
@@ -140,9 +146,11 @@ const Login = () => {
                     <KeyRound className="absolute left-3 top-3.5 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5" />
                     <input
                       id="email-address"
-                      name="ecoplay_login_email"
+                      name="ecoplay_unique_login_email_v2"
                       type="email"
-                      autoComplete="off"
+                      autoComplete="new-password"
+                      readOnly={!email} // Only readOnly if empty to prevent autofill, but allow typing if user started
+                      onFocus={(e) => e.target.removeAttribute('readonly')}
                       required
                       className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-3 bg-theme-input-bg border border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium"
                       placeholder="Seu email"
@@ -160,9 +168,11 @@ const Login = () => {
                     <Lock className="absolute left-3 top-3.5 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5" />
                     <input
                       id="password"
-                      name="ecoplay_login_password"
+                      name="ecoplay_unique_login_password_v2"
                       type="password"
                       autoComplete="new-password"
+                      readOnly={!password}
+                      onFocus={(e) => e.target.removeAttribute('readonly')}
                       required
                       className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-3 bg-theme-input-bg border border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium"
                       placeholder="Sua senha"
