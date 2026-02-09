@@ -578,204 +578,133 @@ const Feedback = () => {
                 <div className="bg-theme-bg-secondary/70 border border-theme-border rounded-3xl p-5">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-sm font-display font-bold text-theme-text-primary">Recompensas</div>
+                      <div className="text-sm font-display font-bold text-theme-text-primary">Conclusão</div>
                       <div className="text-xs text-theme-text-tertiary font-mono mt-1">
-                        {'Complete as seções para desbloquear.'}
+                        {'Resgate seus pontos.'}
                       </div>
                     </div>
                     <div className="text-xs text-theme-text-tertiary font-mono">{badges.length} badges</div>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {badges.length ? (
-                      badges.map((b) => {
-                        const BADGE_STYLES = {
-                          'Explorador(a) da Experiência': {
-                            color: '#06b6d4', // Cyan
-                            surface: 'rgba(6, 182, 212, 0.1)',
-                            border: 'rgba(6, 182, 212, 0.3)',
-                          },
-                          'Guardião(ã) do Aprendizado': {
-                            color: '#10b981', // Emerald
-                            surface: 'rgba(16, 185, 129, 0.1)',
-                            border: 'rgba(16, 185, 129, 0.3)',
-                          },
-                          'Validador(a) Mestre': {
-                            color: '#f59e0b', // Amber
-                            surface: 'rgba(245, 158, 11, 0.1)',
-                            border: 'rgba(245, 158, 11, 0.3)',
-                          },
-                        };
-                        const style = BADGE_STYLES[b] || {
-                          color: accent2.color,
-                          surface: accent2.surface,
-                          border: accent2.border,
-                        };
+                  <div className="bg-theme-bg-secondary/70 border border-theme-border rounded-3xl p-6 text-center shadow-lg sticky top-6">
+                    <div className="flex justify-center mb-4">
+                      <motion.div
+                        animate={{
+                          scale: [1, 1.2, 1],
+                          rotate: [0, 10, -10, 0],
+                          filter: ['brightness(1)', 'brightness(1.3)', 'brightness(1)'],
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-[0_0_30px_rgba(251,191,36,0.4)]"
+                      >
+                        <Star className="w-12 h-12 text-white fill-white" />
+                      </motion.div>
+                    </div>
 
-                        return (
-                          <span
-                            key={b}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold"
-                            style={{
-                              borderColor: style.border,
-                              backgroundColor: style.surface,
-                              color: style.color,
-                            }}
-                          >
-                            <Trophy className="w-3.5 h-3.5" />
-                            {b}
-                          </span>
-                        );
-                      })
-                    ) : (
-                      <div className="text-sm text-theme-text-tertiary">Responda mais para ganhar badges.</div>
+                    <h3 className="text-2xl font-display font-bold text-theme-text-primary">
+                      Avaliação Concluída!
+                    </h3>
+
+                    <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500 font-display py-2">
+                      + 250 XP
+                    </div>
+
+                    <p className="text-theme-text-secondary text-sm px-4">
+                      Sua opinião ajuda a construir um futuro mais sustentável.
+                    </p>
+
+                    <button
+                      type="button"
+                      disabled={!canSubmit}
+                      onClick={() => {
+                        submit();
+                        confetti({
+                          particleCount: 150,
+                          spread: 70,
+                          origin: { y: 0.6 },
+                          colors: ['#34d399', '#fbbf24', '#f472b6'],
+                        });
+                      }}
+                      className={`mt-6 w-full rounded-2xl px-6 py-4 font-display font-bold text-lg transition-all transform hover:scale-105 active:scale-95 ${canSubmit
+                        ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-[0_0_25px_rgba(16,185,129,0.4)] hover:shadow-[0_0_40px_rgba(16,185,129,0.6)]'
+                        : 'bg-theme-bg-tertiary text-theme-text-tertiary cursor-not-allowed opacity-70'
+                        }`}
+                    >
+                      {submitting ? 'Resgatando...' : submitted ? 'Resgatado!' : 'Resgatar Recompensa'}
+                    </button>
+
+                    {!canSubmit && !submitted && (
+                      <div className="text-xs text-theme-text-tertiary mt-3 font-mono">
+                        Complete todas as perguntas para liberar
+                      </div>
                     )}
                   </div>
-
-                  <div className="mt-5">
-                    <div className="text-xs text-theme-text-tertiary font-mono mb-2">{'Meta do n\u00edvel'}</div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      {[
-                        {
-                          name: 'Semente',
-                          min: 0,
-                          colors: {
-                            color: 'var(--theme-text-tertiary)',
-                            surface: 'rgba(var(--theme-bg-primary-rgb), 0.6)',
-                            border: 'var(--theme-border)',
-                          },
-                        },
-                        {
-                          name: 'Broto',
-                          min: 90,
-                          colors: {
-                            color: '#84cc16', // Lime
-                            surface: 'rgba(132, 204, 22, 0.1)',
-                            border: 'rgba(132, 204, 22, 0.4)',
-                          }
-                        },
-                        {
-                          name: '\u00c1rvore',
-                          min: 130,
-                          colors: {
-                            color: '#0ea5e9', // Sky
-                            surface: 'rgba(14, 165, 233, 0.1)',
-                            border: 'rgba(14, 165, 233, 0.4)',
-                          }
-                        },
-                        {
-                          name: 'Floresta',
-                          min: 170,
-                          colors: {
-                            color: '#d946ef', // Fuchsia
-                            surface: 'rgba(217, 70, 239, 0.1)',
-                            border: 'rgba(217, 70, 239, 0.4)',
-                          }
-                        },
-                      ].map((l) => (
-                        <div
-                          key={l.name}
-                          className="rounded-2xl border px-3 py-2"
-                          style={{
-                            borderColor: l.colors.border,
-                            backgroundColor: l.colors.surface,
-                            color: l.colors.color,
-                          }}
-                        >
-                          <div className="font-bold">{l.name}</div>
-                          <div className="font-mono opacity-80">{l.min}+ pts</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-theme-bg-secondary/70 border border-theme-border rounded-3xl p-5">
-                  <div className="text-sm font-display font-bold text-theme-text-primary">Envio</div>
-
-                  <button
-                    type="button"
-                    disabled={!canSubmit}
-                    onClick={submit}
-                    className={`mt-4 w-full rounded-2xl px-4 py-3 font-display font-bold transition-all ${canSubmit
-                      ? 'bg-[color:var(--feedback-accent)] text-[color:var(--feedback-contrast)] shadow-[0_0_25px_var(--feedback-accent-glow)] hover:opacity-95'
-                      : 'bg-theme-bg-tertiary/70 text-theme-text-tertiary cursor-not-allowed'
-                      }`}
-                  >
-                    {submitting ? 'Enviando...' : submitted ? 'Enviado' : 'Concluir avalia\u00e7\u00e3o'}
-                  </button>
-                  {submitted && (
-                    <div className="mt-3 text-xs text-theme-text-tertiary font-mono">
-                      ID: <span className="text-theme-text-primary">{submitted.id}</span>
-                    </div>
-                  )}
                 </div>
               </div>
-            </div>
+            </div >
           </div >
         </div >
-      </div >
 
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl border shadow-2xl"
-            style={{
-              borderColor: toast.type === 'error' ? 'rgba(239,68,68,0.4)' : accent.border,
-              backgroundColor: toast.type === 'error' ? 'rgba(239,68,68,0.12)' : accent.surface,
-              color: toast.type === 'error' ? 'rgba(248,113,113,0.9)' : accent.color,
-            }}
-          >
-            <div className="flex items-center gap-2 font-bold">
-              {toast.type === 'error' ? <FileText className="w-5 h-5" /> : <Award className="w-5 h-5" />}
-              <span>{toast.text}</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {submitted && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          >
+        <AnimatePresence>
+          {toast && (
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-theme-bg-secondary w-full max-w-md rounded-3xl border border-theme-accent p-8 relative overflow-hidden shadow-2xl"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 30 }}
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl border shadow-2xl"
+              style={{
+                borderColor: toast.type === 'error' ? 'rgba(239,68,68,0.4)' : accent.border,
+                backgroundColor: toast.type === 'error' ? 'rgba(239,68,68,0.12)' : accent.surface,
+                color: toast.type === 'error' ? 'rgba(248,113,113,0.9)' : accent.color,
+              }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-[color:var(--feedback-accent-surface)] to-transparent pointer-events-none" />
-              <div className="relative flex flex-col items-center text-center">
-                <div className="w-20 h-20 rounded-full bg-[color:var(--feedback-accent-surface)] border-2 border-[color:var(--feedback-accent)] flex items-center justify-center mb-6 shadow-[0_0_30px_var(--feedback-accent-glow)] animate-pulse-glow">
-                  <Trophy className="w-10 h-10 text-[color:var(--feedback-accent)]" />
-                </div>
-                <h2 className="text-3xl font-display font-bold text-theme-text-primary mb-2">Obrigado!</h2>
-                <p className="text-theme-text-secondary mb-6">
-                  Seu feedback sobre a EcoPlay foi registrado com sucesso. Você ganhou pontos bônus por contribuir!
-                </p>
-
-                <div className="w-full">
-                  <button
-                    onClick={() => setSubmitted(null)}
-                    className="w-full bg-theme-bg-tertiary text-theme-text-primary rounded-xl py-3 font-bold hover:bg-theme-bg-tertiary/80 transition-all"
-                  >
-                    Fechar
-                  </button>
-                </div>
+              <div className="flex items-center gap-2 font-bold">
+                {toast.type === 'error' ? <FileText className="w-5 h-5" /> : <Award className="w-5 h-5" />}
+                <span>{toast.text}</span>
               </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div >
-  );
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {submitted && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="bg-theme-bg-secondary w-full max-w-md rounded-3xl border border-theme-accent p-8 relative overflow-hidden shadow-2xl"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-[color:var(--feedback-accent-surface)] to-transparent pointer-events-none" />
+                <div className="relative flex flex-col items-center text-center">
+                  <div className="w-20 h-20 rounded-full bg-[color:var(--feedback-accent-surface)] border-2 border-[color:var(--feedback-accent)] flex items-center justify-center mb-6 shadow-[0_0_30px_var(--feedback-accent-glow)] animate-pulse-glow">
+                    <Trophy className="w-10 h-10 text-[color:var(--feedback-accent)]" />
+                  </div>
+                  <h2 className="text-3xl font-display font-bold text-theme-text-primary mb-2">Obrigado!</h2>
+                  <p className="text-theme-text-secondary mb-6">
+                    Seu feedback sobre a EcoPlay foi registrado com sucesso. Você ganhou pontos bônus por contribuir!
+                  </p>
+
+                  <div className="w-full">
+                    <button
+                      onClick={() => setSubmitted(null)}
+                      className="w-full bg-theme-bg-tertiary text-theme-text-primary rounded-xl py-3 font-bold hover:bg-theme-bg-tertiary/80 transition-all"
+                    >
+                      Fechar
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div >
+      );
 };
 
-export default Feedback;
+      export default Feedback;
