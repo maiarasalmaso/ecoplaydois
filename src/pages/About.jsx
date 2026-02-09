@@ -186,7 +186,7 @@ const About = () => {
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Enviar email para contato do EcoPlay"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#EA4335] text-white rounded-full font-bold hover:brightness-110 transition-all border border-transparent shadow-lg hover:scale-105 active:scale-95 duration-200"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 transition-all border border-transparent shadow-lg hover:scale-105 active:scale-95 duration-200"
                 >
                   <Mail className="w-5 h-5 text-white" />
                   Gmail
@@ -196,7 +196,7 @@ const About = () => {
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Abrir Instagram do EcoPlay"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 text-white rounded-full font-bold hover:brightness-110 transition-all border border-transparent shadow-lg hover:scale-105 active:scale-95 duration-200"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 transition-all border border-transparent shadow-lg hover:scale-105 active:scale-95 duration-200"
                 >
                   <Instagram className="w-5 h-5 text-white" />
                   Instagram
