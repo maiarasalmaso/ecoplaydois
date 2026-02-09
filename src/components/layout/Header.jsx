@@ -175,7 +175,7 @@ const Header = () => {
             {/* Server Status Indicator moved to Footer */}
 
             {user ? (
-              <div className="hidden md:flex items-center gap-4">
+              <div className="flex items-center gap-4">
                 {/* HUD Stats Panel */}
                 <motion.div
                   className="hidden lg:flex items-center gap-4 bg-theme-bg-tertiary hover:bg-theme-bg-secondary text-theme-text-primary px-4 py-2 rounded-xl border border-theme-border hover:border-green-500/30 backdrop-blur-md shadow-lg cursor-default transition-colors duration-300"
