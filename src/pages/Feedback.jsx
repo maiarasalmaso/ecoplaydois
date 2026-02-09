@@ -179,7 +179,7 @@ const MiniBar = ({ value, max, label, accent, accentAlt }) => {
   const secondary = accentAlt || 'var(--feedback-accent-2)';
   return (
     <div className="flex items-center gap-3">
-      <div className="w-44 text-xs text-theme-text-tertiary font-mono truncate">{label}</div>
+      <div className="w-32 md:w-64 text-xs text-theme-text-tertiary font-mono leading-tight">{label}</div>
       <div className="flex-1 h-2.5 bg-theme-bg-tertiary/70 rounded-full overflow-hidden border border-theme-border">
         <div
           className="h-full"
