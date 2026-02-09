@@ -9,7 +9,118 @@ import { useAuth } from '@/context/AuthContext';
 const DEFAULT_LOGIN = '';
 const DEFAULT_PASSWORD = '';
 
-// ... (keep constants)
+const ADMIN_SESSION_KEY = 'ecoplay.admin.session';
+const ADMIN_REMEMBER_KEY = 'ecoplay.admin.remember';
+const ADMIN_RATE_KEY = 'ecoplay.admin.rate';
+const ADMIN_AUDIT_KEY = 'ecoplay.admin.audit';
+
+const ADMIN_ACCENT = {
+  dark: {
+    color: '#fb923c', // Orange-400
+    colorAlt: '#f97316', // Orange-500
+    surface: 'rgba(251,146,60,0.2)',
+    border: 'rgba(251,146,60,0.6)',
+    glow: 'rgba(251,146,60,0.32)',
+  },
+  light: {
+    color: '#f97316', // Orange-500
+    colorAlt: '#ea580c', // Orange-600
+    surface: 'rgba(249,115,22,0.18)',
+    border: 'rgba(249,115,22,0.5)',
+    glow: 'rgba(249,115,22,0.28)',
+  },
+};
+
+const normalize = (value) => String(value || '').trim();
+
+const nowMs = () => Date.now();
+
+const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+const readJson = (key) => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const writeJson = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignore
+  }
+};
+
+const appendAudit = (action, meta) => {
+  const entry = { ts: new Date().toISOString(), action, meta: meta || null };
+  const existing = readJson(ADMIN_AUDIT_KEY);
+  const next = Array.isArray(existing) ? [entry, ...existing].slice(0, 200) : [entry];
+  writeJson(ADMIN_AUDIT_KEY, next);
+};
+
+const getRateState = () => {
+  const state = readJson(ADMIN_RATE_KEY) || {};
+  return {
+    failedCount: Number.isFinite(state.failedCount) ? state.failedCount : 0,
+    firstFailedAt: Number.isFinite(state.firstFailedAt) ? state.firstFailedAt : 0,
+    lockedUntil: Number.isFinite(state.lockedUntil) ? state.lockedUntil : 0,
+    lockLevel: Number.isFinite(state.lockLevel) ? state.lockLevel : 0,
+  };
+};
+
+const saveRateState = (state) => writeJson(ADMIN_RATE_KEY, state);
+
+const clearRateIfWindowExpired = (state, now) => {
+  const windowMs = 10 * 60 * 1000;
+  if (!state.firstFailedAt) return state;
+  if (now - state.firstFailedAt <= windowMs) return state;
+  return { failedCount: 0, firstFailedAt: 0, lockedUntil: state.lockedUntil, lockLevel: state.lockLevel };
+};
+
+const registerFailure = () => {
+  const now = nowMs();
+  const baseLockMs = 30 * 1000;
+  const threshold = 5;
+  let state = clearRateIfWindowExpired(getRateState(), now);
+
+  if (state.lockedUntil && now < state.lockedUntil) return state;
+
+  const nextFailedCount = state.failedCount + 1;
+  const firstFailedAt = state.firstFailedAt || now;
+
+  if (nextFailedCount >= threshold) {
+    const nextLockLevel = Math.min(6, state.lockLevel + 1);
+    const lockMs = baseLockMs * 2 ** (nextLockLevel - 1);
+    const lockedUntil = now + lockMs;
+    state = { failedCount: 0, firstFailedAt: 0, lockedUntil, lockLevel: nextLockLevel };
+    saveRateState(state);
+    console.debug('[admin-login] bloqueio ativado', { lockMs, lockLevel: nextLockLevel });
+    return state;
+  }
+
+  state = { ...state, failedCount: nextFailedCount, firstFailedAt };
+  saveRateState(state);
+  console.debug('[admin-login] tentativa inválida', { failedCount: state.failedCount });
+  return state;
+};
+
+const createSession = (remember) => {
+  const now = nowMs();
+  const ttlMs = remember ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000;
+  const session = { createdAt: now, expiresAt: now + ttlMs };
+  const storage = remember ? localStorage : sessionStorage;
+  try {
+    storage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
+  } catch {
+    // ignore
+  }
+};
+
+const isLocked = (state, now) => state.lockedUntil && now < state.lockedUntil;
 
 const AdminLogin = () => {
   const navigate = useNavigate();
