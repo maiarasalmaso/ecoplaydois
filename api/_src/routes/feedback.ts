@@ -20,6 +20,17 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
             meta
         } = req.body;
 
+        // Check if user already submitted feedback
+        const checkExisting = await query(
+            'SELECT id FROM feedback_responses WHERE local_user_id = $1',
+            [userId]
+        );
+
+        if (checkExisting.rows.length > 0) {
+            res.status(403).json({ error: 'Você já enviou sua avaliação.' });
+            return;
+        }
+
         const queryText = `
             INSERT INTO feedback_responses (
                 id, local_user_id, score, level, badges, ux, learning, meta, created_at
@@ -51,6 +62,23 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Error submitting feedback:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
+
+// Check if user has already submitted feedback
+router.get('/check', authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user.userId;
+        const result = await query(
+            'SELECT id FROM feedback_responses WHERE local_user_id = $1',
+            [userId]
+        );
+        res.json({ hasFeedback: result.rows.length > 0 });
+    } catch (error) {
+        console.error('Error checking feedback status:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

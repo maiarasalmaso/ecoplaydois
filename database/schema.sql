@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS progress (
 CREATE TABLE IF NOT EXISTS feedback_responses (
     id TEXT PRIMARY KEY,
     created_at VARCHAR(255),
-    local_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    local_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL UNIQUE,
     user_name VARCHAR(255),
     user_email VARCHAR(255),
     user_type VARCHAR(50),

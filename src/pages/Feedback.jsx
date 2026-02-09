@@ -13,6 +13,7 @@ import {
   openPrintableReport,
   saveFeedbackResponse,
 } from '../utils/feedbackStore';
+import { checkUserHasFeedback } from '../services/remoteDb';
 
 const UX_LIKERT = [
   { id: 'ux_navigation', label: 'A navega\u00e7\u00e3o \u00e9 intuitiva.' },
@@ -239,6 +240,26 @@ const Feedback = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(null);
   const [toast, setToast] = useState(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    checkUserHasFeedback().then((has) => {
+      if (mounted) {
+        if (has) setSubmitted({ id: 'previous-submission' });
+        setChecking(false);
+      }
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-theme-bg-primary">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[color:var(--feedback-accent)]"></div>
+      </div>
+    );
+  }
 
   const totalFields = UX_LIKERT.length + LEARNING_LIKERT.length + UX_OPEN.length;
   const answeredFields = useMemo(() => {

@@ -433,6 +433,14 @@ const providers = {
       });
       return { enabled: true };
     },
+    checkUserFeedback: async () => {
+      try {
+        const { hasFeedback } = await apiFetch('/api/feedback/check');
+        return hasFeedback;
+      } catch {
+        return false;
+      }
+    },
     upsertFeedback: async (response) => {
       const payload = feedbackToRow(response);
       await apiFetch('/api/feedback', {
@@ -480,5 +488,6 @@ export const registerProfile = (args) => delegate('registerProfile', args);
 export const getProgress = (id) => delegate('getProgress', id);
 export const upsertProgress = (id, data) => delegate('upsertProgress', id, data);
 export const upsertFeedbackResponse = (data) => delegate('upsertFeedback', data);
+export const checkUserHasFeedback = () => delegate('checkUserFeedback');
 export const getLeaderboard = () => delegate('getLeaderboard');
 
