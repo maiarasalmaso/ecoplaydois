@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { Menu, X, LogOut, Calendar, Star, Zap, DoorOpen, Trophy, Flame, Volume2, VolumeX } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ThemeToggle from '@/components/ui/ThemeToggle';
@@ -347,13 +348,13 @@ const Header = () => {
 
       {/* Mobile Menu Drawer */}
       <AnimatePresence>
-        {isMenuOpen && (
+        {isMenuOpen && createPortal(
           <motion.div
             initial={{ opacity: 0, x: '100%' }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed inset-0 top-[80px] z-40 bg-theme-bg-primary/95 backdrop-blur-2xl md:hidden overflow-y-auto border-t border-theme-border"
+            className="fixed inset-0 top-[80px] z-[60] bg-theme-bg-primary/95 backdrop-blur-2xl md:hidden overflow-y-auto border-t border-theme-border"
           >
             <nav className="flex flex-col p-6 gap-4 min-h-[calc(100vh-80px)]">
               <div className="flex items-center gap-2 mb-4 opacity-50">
@@ -452,7 +453,8 @@ const Header = () => {
                 </div>
               )}
             </nav>
-          </motion.div>
+          </motion.div>,
+          document.body
         )}
       </AnimatePresence>
 
