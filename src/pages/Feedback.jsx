@@ -184,8 +184,8 @@ const MiniBar = ({ value, max, label, accent, accentAlt }) => {
         <div
           className="h-full"
           style={{
-            width: `${pct}% `,
-            backgroundImage: `linear - gradient(90deg, ${primary}, ${secondary})`,
+            width: `${pct}%`,
+            backgroundImage: `linear-gradient(90deg, ${primary}, ${secondary})`,
           }}
         />
       </div>
@@ -270,10 +270,10 @@ const Feedback = () => {
   const onCompleteSection = useCallback(
     (section) => {
       if (section === 'ux') {
-        showToast({ type: 'ok', text: 'Se\u00e7\u00e3o de Experi\u00eancia conclu\u00edda. Voc\u00ea ganhou uma medalha!' });
+        showToast({ type: 'ok', text: 'Seção de Experiência concluída. Você ganhou uma medalha!' });
       }
       if (section === 'learning') {
-        showToast({ type: 'ok', text: 'Se\u00e7\u00e3o de Aprendizado conclu\u00edda. Pontos b\u00f4nus liberados!' });
+        showToast({ type: 'ok', text: 'Seção de Aprendizado concluída. Pontos bônus liberados!' });
       }
     },
     [showToast]
@@ -319,32 +319,32 @@ const Feedback = () => {
         const name = String(r?.user?.name || r?.user?.email || '-');
         const scoreValue = Number(r.score || 0);
         const levelValue = String(r.level || '-');
-        return `< tr ><td style="padding:8px;border-bottom:1px solid #eee">${created}</td><td style="padding:8px;border-bottom:1px solid #eee">${name}</td><td style="padding:8px;border-bottom:1px solid #eee">${scoreValue}</td><td style="padding:8px;border-bottom:1px solid #eee">${levelValue}</td></tr > `;
+        return `<tr><td style="padding:8px;border-bottom:1px solid #eee">${created}</td><td style="padding:8px;border-bottom:1px solid #eee">${name}</td><td style="padding:8px;border-bottom:1px solid #eee">${scoreValue}</td><td style="padding:8px;border-bottom:1px solid #eee">${levelValue}</td></tr>`;
       })
       .join('');
 
     const html = [
       '<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto;max-width:960px;margin:24px auto;padding:0 16px">',
-      '<h1 style="margin:0 0 12px">Resumo Executivo - Avalia\u00e7\u00e3o EcoPlay</h1>',
+      '<h1 style="margin:0 0 12px">Resumo Executivo - Avaliação EcoPlay</h1>',
       '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0">',
-      `< div style = "border:1px solid #ddd;border-radius:12px;padding:12px" ><div style="font-size:12px;color:#555">Total de respostas</div><div style="font-size:28px;font-weight:800">${summary.totalResponses}</div></div > `,
-      `< div style = "border:1px solid #ddd;border-radius:12px;padding:12px" ><div style="font-size:12px;color:#555">M\u00e9dia UX</div><div style="font-size:28px;font-weight:800">${formatDecimal(summary.uxOverall)}</div></div > `,
-      `< div style = "border:1px solid #ddd;border-radius:12px;padding:12px" ><div style="font-size:12px;color:#555">M\u00e9dia Aprendizado</div><div style="font-size:28px;font-weight:800">${formatDecimal(summary.learningOverall)}</div></div > `,
+      `<div style="border:1px solid #ddd;border-radius:12px;padding:12px"><div style="font-size:12px;color:#555">Total de respostas</div><div style="font-size:28px;font-weight:800">${summary.totalResponses}</div></div>`,
+      `<div style="border:1px solid #ddd;border-radius:12px;padding:12px"><div style="font-size:12px;color:#555">Média UX</div><div style="font-size:28px;font-weight:800">${formatDecimal(summary.uxOverall)}</div></div>`,
+      `<div style="border:1px solid #ddd;border-radius:12px;padding:12px"><div style="font-size:12px;color:#555">Média Aprendizado</div><div style="font-size:28px;font-weight:800">${formatDecimal(summary.learningOverall)}</div></div>`,
       '</div>',
       '<h2 style="margin:18px 0 8px">KPIs</h2>',
       '<ul>',
-      `< li > Score m\u00e9dio: ${formatDecimal(summary.scoreAvg)}</li > `,
-      `< li > UX(1 - 5): ${formatDecimal(summary.uxOverall)}</li > `,
-      `< li > Aprendizado(1 - 5): ${formatDecimal(summary.learningOverall)}</li > `,
+      `<li>Score médio: ${formatDecimal(summary.scoreAvg)}</li>`,
+      `<li>UX (1-5): ${formatDecimal(summary.uxOverall)}</li>`,
+      `<li>Aprendizado (1-5): ${formatDecimal(summary.learningOverall)}</li>`,
       '</ul>',
-      '<h2 style="margin:18px 0 8px">\u00daltimas respostas</h2>',
+      '<h2 style="margin:18px 0 8px">Últimas respostas</h2>',
       '<table style="width:100%;border-collapse:collapse">',
-      '<thead><tr><th style="text-align:left;border-bottom:1px solid #ddd;padding:8px">Data</th><th style="text-align:left;border-bottom:1px solid #ddd;padding:8px">Usu\u00e1rio</th><th style="text-align:left;border-bottom:1px solid #ddd;padding:8px">Score</th><th style="text-align:left;border-bottom:1px solid #ddd;padding:8px">N\u00edvel</th></tr></thead>',
-      `< tbody > ${rows}</tbody > `,
+      '<thead><tr><th style="text-align:left;border-bottom:1px solid #ddd;padding:8px">Data</th><th style="text-align:left;border-bottom:1px solid #ddd;padding:8px">Usuário</th><th style="text-align:left;border-bottom:1px solid #ddd;padding:8px">Score</th><th style="text-align:left;border-bottom:1px solid #ddd;padding:8px">Nível</th></tr></thead>',
+      `<tbody>${rows}</tbody>`,
       '</table>',
       '</div>',
     ].join('');
-    openPrintableReport({ title: 'EcoPlay - Avalia\u00e7\u00e3o', html });
+    openPrintableReport({ title: 'EcoPlay - Avaliação', html });
   }, [responses, summary]);
 
   const submit = useCallback(async () => {
@@ -369,10 +369,10 @@ const Feedback = () => {
       }
       playCelebration(); // Toca som de vitória
       setActiveSection('report');
-      showToast({ type: 'ok', text: 'Miss\u00e3o conclu\u00edda! Obrigado por validar a proposta.' });
+      showToast({ type: 'ok', text: 'Missão concluída! Obrigado por validar a proposta.' });
     } catch (e) {
       void e;
-      showToast({ type: 'error', text: 'N\u00e3o foi poss\u00edvel salvar sua avalia\u00e7\u00e3o. Tente novamente.' });
+      showToast({ type: 'error', text: 'Não foi possível salvar sua avaliação. Tente novamente.' });
     } finally {
       setSubmitting(false);
     }
@@ -425,21 +425,21 @@ const Feedback = () => {
 
             <div className="mt-6 grid md:grid-cols-3 gap-4">
               <StatCard Icon={Trophy} label="Score" value={score} accent={accent3} />
-              <StatCard Icon={Award} label={'N\u00edvel'} value={level} accent={accent2} />
-              <StatCard Icon={BarChart3} label="Progresso" value={`${progressPct}% `} accent={accent} />
+              <StatCard Icon={Award} label={'Nível'} value={level} accent={accent2} />
+              <StatCard Icon={BarChart3} label="Progresso" value={`${progressPct}%`} accent={accent} />
             </div>
 
             <div className="mt-4">
               <div className="h-3 w-full bg-theme-bg-tertiary/70 rounded-full overflow-hidden border border-theme-border animate-pulse">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${clamp(progressPct, 0, 100)}% ` }}
+                  animate={{ width: `${clamp(progressPct, 0, 100)}%` }}
                   className="h-full"
-                  style={{ backgroundImage: `linear - gradient(90deg, ${accent.color}, ${accent2.color})` }}
+                  style={{ backgroundImage: `linear-gradient(90deg, ${accent.color}, ${accent2.color})` }}
                 />
               </div>
 
-            </div >
+            </div> >
 
             <div className="mt-6 flex flex-wrap gap-2">
               {[
