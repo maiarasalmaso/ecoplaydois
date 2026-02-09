@@ -1,6 +1,5 @@
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import MobileDock from '@/components/layout/MobileDock';
 import DailyBonusNotification from '@/components/ui/DailyBonusNotification';
 import TrophyNotification from '@/components/ui/TrophyNotification';
 
@@ -16,7 +15,6 @@ const Layout = ({ children }) => {
       <div className="relative z-10">
         <Footer />
       </div>
-      <MobileDock />
     </div>
   );
 };
