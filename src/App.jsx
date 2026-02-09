@@ -8,6 +8,7 @@ import Layout from '@/components/layout/Layout';
 import PrivateRoute from '@/components/ui/PrivateRoute';
 import AmbientSoundPlayer from '@/components/AmbientSoundPlayer';
 import AnimatedBackground from '@/components/layout/AnimatedBackground';
+import AudioUnlocker from '@/components/ui/AudioUnlocker';
 import GamesHub from '@/pages/GamesHub';
 
 // Utility to retry lazy imports if chunk load fails (e.g., after a new deployment)
@@ -74,6 +75,7 @@ function App() {
       <AuthProvider>
         <GameStateProvider>
           <AgeFilterProvider>
+            <AudioUnlocker />
             <AnimatedBackground />
             <Suspense fallback={<RouteFallback />}>
               <Routes>

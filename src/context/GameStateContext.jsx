@@ -235,16 +235,14 @@ export const GameStateProvider = ({ children }) => {
     }
   }, [user]);
 
-  // Save Idle Data
-  useEffect(() => {
-    if (isLoaded) {
-      const storageId = user?.id || 'guest';
-      localStorage.setItem(`ecoplay_modules_${storageId}`, JSON.stringify(modules));
-      localStorage.setItem(`ecoplay_energy_${storageId}`, String(energy));
-      localStorage.setItem(`ecoplay_credits_${storageId}`, String(ecoCredits));
-      localStorage.setItem(`ecoplay_last_time_${storageId}`, String(Date.now()));
-    }
-  }, [modules, energy, ecoCredits, user, isLoaded]);
+  // Save Idle Data - OPTIMIZED: efficient periodic saving instead of reactive
+  // We removed the reactive useEffect that wrote to localStorage on every energy tick (1s).
+  // Now we rely on:
+  // 1. periodic save (10s)
+  // 2. visibility change (flush)
+  // 3. significant actions (upgrades)
+
+  // This drastically reduces main thread blocking on mobile.
 
   // Production Loop (1s Tick)
   useEffect(() => {
@@ -254,6 +252,9 @@ export const GameStateProvider = ({ children }) => {
     }
 
     const interval = setInterval(() => {
+      // Only produce if user is logged in AND page is visible
+      if (!user || document.visibilityState === 'hidden') return;
+
       const prod = calculateProduction();
       if (prod > 0) {
         setEnergy(prev => prev + prod);
@@ -265,7 +266,7 @@ export const GameStateProvider = ({ children }) => {
       setLastSaveTime(Date.now());
     }, 1000);
     return () => clearInterval(interval);
-  }, [calculateProduction]);
+  }, [calculateProduction, user]);
 
   useEffect(() => {
     badgeUnlocksRef.current = badgeUnlocks || {};
@@ -558,7 +559,14 @@ export const GameStateProvider = ({ children }) => {
       if (!isFlush) setSyncStatus('saving');
 
       try {
-        await upsertProgress(user.id, progressData);
+        // Send explicit root fields for backend compatibility
+        const payload = {
+          ...progressData,
+          energy: current.energy,
+          eco_credits: current.ecoCredits
+        };
+
+        await upsertProgress(user.id, payload);
         if (!isFlush) setSyncStatus('synced');
       } catch (err) {
         console.warn('Background Save Failed:', err);
@@ -567,10 +575,13 @@ export const GameStateProvider = ({ children }) => {
         // Conflict Handling
         if (err.message && (err.message.includes('Conflict') || err.message.includes('Version') || err.status === 409)) {
           console.error('[Sync] Conflict detected. Forcing re-fetch from server...');
-          if (typeof window !== 'undefined' && window.alert) {
-            window.alert('Conflito de dados detectado. Atualizando para a versão mais recente do servidor.');
-          }
           setIsLoaded(false);
+        }
+
+        // Auth Handling
+        if (err.message && (err.message.includes('Unauthorized') || err.status === 401)) {
+          console.error('[Sync] Auth error. Token might be expired.');
+          // Optionally trigger logout or refresh
         }
       }
     }
@@ -599,11 +610,16 @@ export const GameStateProvider = ({ children }) => {
     return () => clearTimeout(timeout);
   }, [badges, modules, completedLevels, user, isLoaded, executeSave]);
 
-  // 3. Flush on Visibility Change (Mobile Shield)
+  // 3. Flush on Visibility Change (Mobile Shield) & Re-fetch on Restore
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
+        // Save immediately when minimizing/switching tabs
         executeSave(true);
+      } else if (document.visibilityState === 'visible') {
+        // Re-fetch data when coming back to the app (Sync across devices)
+        console.log('[Sync] 👁️ App in foreground. Checking for remote updates...');
+        setIsLoaded(false); // This triggers the main 'load' effect
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
