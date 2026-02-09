@@ -271,17 +271,6 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* MOBILE ADAPTATION: Prevent accidental selection and zoom interactions */
-  touch-action: pan-x pan-y;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* MOBILE ADAPTATION: Game containers should not scroll or select */
-.game-container,
-canvas {
-  touch-action: none !important;
-  user-select: none;
-  -webkit-user-select: none;
 }
 
 /* Ensure autofill doesn't override dark inputs */
