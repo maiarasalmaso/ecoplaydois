@@ -424,10 +424,9 @@ const AdminPanel = () => {
                                 <span className="font-bold text-theme-text-primary">{avg.toFixed(1)}</span>
                               </div>
                               <div className="h-2 w-full bg-theme-bg-tertiary rounded-full overflow-hidden">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${(avg / 5) * 100}%` }}
-                                  className="h-full bg-amber-500 rounded-full"
+                                <div
+                                  style={{ width: `${isNaN(avg) ? 0 : (avg / 5) * 100}%` }}
+                                  className="h-full bg-amber-500 rounded-full transition-all duration-500 ease-in-out"
                                 />
                               </div>
                             </div>
@@ -456,10 +455,9 @@ const AdminPanel = () => {
                                 <span className="font-bold text-theme-text-primary">{avg.toFixed(1)}</span>
                               </div>
                               <div className="h-2 w-full bg-theme-bg-tertiary rounded-full overflow-hidden">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${(avg / 5) * 100}%` }}
-                                  className="h-full bg-emerald-500 rounded-full"
+                                <div
+                                  style={{ width: `${isNaN(avg) ? 0 : (avg / 5) * 100}%` }}
+                                  className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-in-out"
                                 />
                               </div>
                             </div>
@@ -563,8 +561,8 @@ const AdminPanel = () => {
                                                   <Star
                                                     key={s}
                                                     className={`w-3 h-3 ${s <= (f.ux?.[q.id] || 0)
-                                                        ? 'fill-amber-500 text-amber-500'
-                                                        : 'text-theme-border'
+                                                      ? 'fill-amber-500 text-amber-500'
+                                                      : 'text-theme-border'
                                                       }`}
                                                   />
                                                 ))}
@@ -586,8 +584,8 @@ const AdminPanel = () => {
                                                   <Star
                                                     key={s}
                                                     className={`w-3 h-3 ${s <= (f.learning?.[q.id] || 0)
-                                                        ? 'fill-emerald-500 text-emerald-500'
-                                                        : 'text-theme-border'
+                                                      ? 'fill-emerald-500 text-emerald-500'
+                                                      : 'text-theme-border'
                                                       }`}
                                                   />
                                                 ))}
