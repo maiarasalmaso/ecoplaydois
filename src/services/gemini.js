@@ -160,29 +160,3 @@ export const prefetchQuestions = () => { };
 export const recordQuestionOutcome = () => { };
 export const getGeminiMetrics = () => ({});
 
-export const generateAssistantResponse = async (message, assistantAge = 12, quizContext = null) => {
-  try {
-    const response = await fetch('/api/eco-bot/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, assistantAge, quizContext })
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      return { success: true, data };
-    }
-    throw new Error(`API error: ${response.status}`);
-  } catch (error) {
-    console.error('Failed to get assistant response:', error);
-    return {
-      success: false,
-      data: {
-        response: "Desculpe, estou com dificuldades para processar sua mensagem agora. Tente novamente mais tarde.",
-        errorType: "Connection Error",
-        correctionGuide: [],
-        improvementTips: []
-      }
-    };
-  }
-};
