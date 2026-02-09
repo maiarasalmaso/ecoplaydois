@@ -120,16 +120,16 @@ const Header = () => {
       className="bg-[var(--theme-backdrop)] backdrop-blur-md border-b border-theme-border sticky top-0 z-50 transition-all duration-300"
       style={headerStyle}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo HUD Style */}
-          <Link to="/" className="flex items-center gap-3 group relative">
+          <Link to="/" className="flex items-center gap-2 md:gap-3 group relative shrink-0">
             <div className="absolute inset-0 bg-green-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="bg-gradient-to-br from-theme-bg-tertiary to-theme-bg-secondary p-2.5 rounded-xl border border-theme-border shadow-lg group-hover:scale-105 transition-transform relative z-10 flex items-center justify-center">
-              <span className="terra-girando text-2xl leading-none">&#x1F30D;</span>
+            <div className="bg-gradient-to-br from-theme-bg-tertiary to-theme-bg-secondary p-2 md:p-2.5 rounded-xl border border-theme-border shadow-lg group-hover:scale-105 transition-transform relative z-10 flex items-center justify-center">
+              <span className="terra-girando text-xl md:text-2xl leading-none">&#x1F30D;</span>
             </div>
             <div className="flex flex-col">
-              <span className="font-display font-bold text-2xl tracking-wide text-theme-text-primary leading-none">
+              <span className="font-display font-bold text-lg md:text-2xl tracking-wide text-theme-text-primary leading-none">
                 ECO<span className="text-green-400">PLAY</span>
               </span>
             </div>
