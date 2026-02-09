@@ -98,6 +98,9 @@ const Header = () => {
     );
   }
 
+  // Helper Styles for Mobile
+  const mobileBtnClass = "p-2 rounded-lg text-theme-text-secondary hover:bg-theme-bg-tertiary transition-colors relative";
+
   return (
     <header
       className="bg-[var(--theme-backdrop)] backdrop-blur-md border-b border-theme-border sticky top-0 z-50 transition-all duration-300"
