@@ -401,6 +401,73 @@ const AdminPanel = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Detailed Metrics Breakdown */}
+                  <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* UX Metrics */}
+                    <div className="bg-theme-bg-secondary/30 p-6 rounded-2xl border border-theme-border">
+                      <h4 className="font-bold text-theme-text-primary mb-6 flex items-center gap-2">
+                        <Star className="w-5 h-5 text-amber-500 fill-amber-500" /> Experiência do Usuário
+                      </h4>
+                      <div className="space-y-4">
+                        {UX_LIKERT.map((item) => {
+                          const validReviews = filteredFeedback.filter((f) => f.ux && f.ux[item.id]);
+                          const avg =
+                            validReviews.length > 0
+                              ? validReviews.reduce((acc, f) => acc + (Number(f.ux[item.id]) || 0), 0) /
+                              validReviews.length
+                              : 0;
+                          return (
+                            <div key={item.id}>
+                              <div className="flex justify-between text-sm mb-1">
+                                <span className="text-theme-text-secondary">{item.label}</span>
+                                <span className="font-bold text-theme-text-primary">{avg.toFixed(1)}</span>
+                              </div>
+                              <div className="h-2 w-full bg-theme-bg-tertiary rounded-full overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${(avg / 5) * 100}%` }}
+                                  className="h-full bg-amber-500 rounded-full"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Learning Metrics */}
+                    <div className="bg-theme-bg-secondary/30 p-6 rounded-2xl border border-theme-border">
+                      <h4 className="font-bold text-theme-text-primary mb-6 flex items-center gap-2">
+                        <Shield className="w-5 h-5 text-emerald-500 fill-emerald-500" /> Impacto Educacional
+                      </h4>
+                      <div className="space-y-4">
+                        {LEARNING_LIKERT.map((item) => {
+                          const validReviews = filteredFeedback.filter((f) => f.learning && f.learning[item.id]);
+                          const avg =
+                            validReviews.length > 0
+                              ? validReviews.reduce((acc, f) => acc + (Number(f.learning[item.id]) || 0), 0) /
+                              validReviews.length
+                              : 0;
+                          return (
+                            <div key={item.id}>
+                              <div className="flex justify-between text-sm mb-1">
+                                <span className="text-theme-text-secondary">{item.label}</span>
+                                <span className="font-bold text-theme-text-primary">{avg.toFixed(1)}</span>
+                              </div>
+                              <div className="h-2 w-full bg-theme-bg-tertiary rounded-full overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${(avg / 5) * 100}%` }}
+                                  className="h-full bg-emerald-500 rounded-full"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -496,8 +563,8 @@ const AdminPanel = () => {
                                                   <Star
                                                     key={s}
                                                     className={`w-3 h-3 ${s <= (f.ux?.[q.id] || 0)
-                                                        ? 'fill-amber-500 text-amber-500'
-                                                        : 'text-theme-border'
+                                                      ? 'fill-amber-500 text-amber-500'
+                                                      : 'text-theme-border'
                                                       }`}
                                                   />
                                                 ))}
@@ -519,8 +586,8 @@ const AdminPanel = () => {
                                                   <Star
                                                     key={s}
                                                     className={`w-3 h-3 ${s <= (f.learning?.[q.id] || 0)
-                                                        ? 'fill-emerald-500 text-emerald-500'
-                                                        : 'text-theme-border'
+                                                      ? 'fill-emerald-500 text-emerald-500'
+                                                      : 'text-theme-border'
                                                       }`}
                                                   />
                                                 ))}
