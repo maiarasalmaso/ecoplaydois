@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BarChart3, Filter, LogOut, RefreshCw, Search, Shield, ArrowLeft, Users, AlertTriangle, FileText, Star } from 'lucide-react';
+import { BarChart3, Filter, LogOut, RefreshCw, Search, Shield, ArrowLeft, Users, AlertTriangle, FileText, Star, ChevronDown, ChevronRight } from 'lucide-react';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -24,6 +24,22 @@ const ADMIN_ACCENT = {
   },
 };
 
+const UX_LIKERT = [
+  { id: 'ux_navigation', label: 'Navegação Intuitiva' },
+  { id: 'ux_design', label: 'Design Visual' },
+  { id: 'ux_clarity', label: 'Clareza dos Textos' },
+  { id: 'ux_speed', label: 'Performance' },
+  { id: 'ux_satisfaction', label: 'Satisfação Geral' },
+  { id: 'ux_recommend', label: 'Recomendação' },
+];
+
+const LEARNING_LIKERT = [
+  { id: 'learn_effective', label: 'Aprendizado Novo' },
+  { id: 'learn_reinforce', label: 'Reforço de Práticas' },
+  { id: 'learn_level', label: 'Adequação de Nível' },
+  { id: 'learn_motivation', label: 'Motivação' },
+];
+
 const formatNumber = (value) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(Number.isFinite(value) ? value : 0);
 
 const AdminPanel = () => {
@@ -41,6 +57,7 @@ const AdminPanel = () => {
   const [feedback, setFeedback] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedFeedback, setExpandedFeedback] = useState(null); // Track expanded row ID
 
   // Date Filters
   const [dateStart, setDateStart] = useState('');
@@ -291,8 +308,8 @@ const AdminPanel = () => {
                 <button
                   onClick={() => setFeedbackSubTab('chart')}
                   className={`pb-2 text-sm font-bold transition-all relative ${feedbackSubTab === 'chart'
-                      ? 'text-[color:var(--admin-accent)]'
-                      : 'text-theme-text-secondary hover:text-theme-text-primary'
+                    ? 'text-[color:var(--admin-accent)]'
+                    : 'text-theme-text-secondary hover:text-theme-text-primary'
                     }`}
                 >
                   <BarChart3 className="inline mr-2 w-4 h-4" />
@@ -307,8 +324,8 @@ const AdminPanel = () => {
                 <button
                   onClick={() => setFeedbackSubTab('comments')}
                   className={`pb-2 text-sm font-bold transition-all relative ${feedbackSubTab === 'comments'
-                      ? 'text-[color:var(--admin-accent)]'
-                      : 'text-theme-text-secondary hover:text-theme-text-primary'
+                    ? 'text-[color:var(--admin-accent)]'
+                    : 'text-theme-text-secondary hover:text-theme-text-primary'
                     }`}
                 >
                   <FileText className="inline mr-2 w-4 h-4" />
@@ -402,52 +419,140 @@ const AdminPanel = () => {
                     <tbody className="divide-y divide-theme-border/50">
                       {filteredFeedback.length === 0 ? (
                         <tr>
-                          <td colSpan={4} className="p-8 text-center text-theme-text-tertiary">
+                          <td colSpan={5} className="p-8 text-center text-theme-text-tertiary">
                             Nenhuma avaliação encontrada no período.
                           </td>
                         </tr>
                       ) : (
-                        filteredFeedback.map((f) => (
-                          <tr key={f.id} className="hover:bg-theme-bg-tertiary/30 transition-colors">
-                            <td className="px-6 py-4">
-                              <div className="font-bold text-theme-text-primary">{f.full_name || 'Anônimo'}</div>
-                              <div className="text-xs text-theme-text-tertiary font-normal">{f.email}</div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-1 font-bold text-yellow-500 w-fit">
-                                {f.computedRating} <Star className="w-3 h-3 fill-yellow-500" />
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex flex-col gap-1 text-theme-text-secondary text-sm p-2 rounded bg-theme-bg-primary/50 border border-theme-border/50">
-                                {f.ux?.ux_open_like ? (
-                                  <div>
-                                    <span className="font-bold text-emerald-500/80 text-xs uppercase mr-1">Gostou:</span>
-                                    {f.ux.ux_open_like}
+                        filteredFeedback.map((f) => {
+                          const isExpanded = expandedFeedback === f.id;
+                          return (
+                            <>
+                              <tr
+                                key={f.id}
+                                className={`hover:bg-theme-bg-tertiary/30 transition-colors cursor-pointer ${isExpanded ? 'bg-theme-bg-tertiary/20' : ''
+                                  }`}
+                                onClick={() => setExpandedFeedback(isExpanded ? null : f.id)}
+                              >
+                                <td className="px-6 py-4">
+                                  <div className="font-bold text-theme-text-primary flex items-center gap-2">
+                                    {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                    {f.full_name || 'Anônimo'}
                                   </div>
-                                ) : null}
-                                {f.ux?.ux_open_improve ? (
-                                  <div>
-                                    <span className="font-bold text-amber-500/80 text-xs uppercase mr-1">Melhorar:</span>
-                                    {f.ux.ux_open_improve}
+                                  <div className="text-xs text-theme-text-tertiary font-normal ml-6">{f.email}</div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center gap-1 font-bold text-yellow-500 w-fit">
+                                    {f.computedRating} <Star className="w-3 h-3 fill-yellow-500" />
                                   </div>
-                                ) : null}
-                                {f.ux?.ux_open_ideas ? (
-                                  <div>
-                                    <span className="font-bold text-blue-500/80 text-xs uppercase mr-1">Ideia:</span>
-                                    {f.ux.ux_open_ideas}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex flex-col gap-1 text-theme-text-secondary text-sm p-2 rounded bg-theme-bg-primary/50 border border-theme-border/50">
+                                    {f.ux?.ux_open_like ? (
+                                      <div>
+                                        <span className="font-bold text-emerald-500/80 text-xs uppercase mr-1">Gostou:</span>
+                                        {f.ux.ux_open_like}
+                                      </div>
+                                    ) : null}
+                                    {f.ux?.ux_open_improve ? (
+                                      <div>
+                                        <span className="font-bold text-amber-500/80 text-xs uppercase mr-1">Melhorar:</span>
+                                        {f.ux.ux_open_improve}
+                                      </div>
+                                    ) : null}
+                                    {f.ux?.ux_open_ideas ? (
+                                      <div>
+                                        <span className="font-bold text-blue-500/80 text-xs uppercase mr-1">Ideia:</span>
+                                        {f.ux.ux_open_ideas}
+                                      </div>
+                                    ) : null}
+                                    {!f.ux?.ux_open_like && !f.ux?.ux_open_improve && !f.ux?.ux_open_ideas && (
+                                      <div className="italic opacity-50 text-center">Sem comentário escrito</div>
+                                    )}
                                   </div>
-                                ) : null}
-                                {!f.ux?.ux_open_like && !f.ux?.ux_open_improve && !f.ux?.ux_open_ideas && (
-                                  <div className="italic opacity-50 text-center">Sem comentário escrito</div>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-theme-text-tertiary text-sm">
-                              {new Date(f.created_at).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))
+                                </td>
+                                <td className="px-6 py-4 text-theme-text-tertiary text-sm">
+                                  {new Date(f.created_at).toLocaleDateString()}
+                                </td>
+                              </tr>
+                              {isExpanded && (
+                                <tr className="bg-theme-bg-tertiary/10">
+                                  <td colSpan={5} className="px-6 py-4 border-b border-theme-border/30">
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: 'auto' }}
+                                      className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm"
+                                    >
+                                      <div>
+                                        <h4 className="font-bold text-theme-text-primary mb-3 flex items-center gap-2">
+                                          <Star className="w-4 h-4 text-amber-500" /> Experiência (UX)
+                                        </h4>
+                                        <div className="space-y-2">
+                                          {UX_LIKERT.map((q) => (
+                                            <div key={q.id} className="flex justify-between items-center border-b border-theme-border/30 pb-1">
+                                              <span className="text-theme-text-secondary">{q.label}</span>
+                                              <div className="flex gap-0.5">
+                                                {[1, 2, 3, 4, 5].map((s) => (
+                                                  <Star
+                                                    key={s}
+                                                    className={`w-3 h-3 ${s <= (f.ux?.[q.id] || 0)
+                                                        ? 'fill-amber-500 text-amber-500'
+                                                        : 'text-theme-border'
+                                                      }`}
+                                                  />
+                                                ))}
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <h4 className="font-bold text-theme-text-primary mb-3 flex items-center gap-2">
+                                          <Shield className="w-4 h-4 text-emerald-500" /> Aprendizado
+                                        </h4>
+                                        <div className="space-y-2">
+                                          {LEARNING_LIKERT.map((q) => (
+                                            <div key={q.id} className="flex justify-between items-center border-b border-theme-border/30 pb-1">
+                                              <span className="text-theme-text-secondary">{q.label}</span>
+                                              <div className="flex gap-0.5">
+                                                {[1, 2, 3, 4, 5].map((s) => (
+                                                  <Star
+                                                    key={s}
+                                                    className={`w-3 h-3 ${s <= (f.learning?.[q.id] || 0)
+                                                        ? 'fill-emerald-500 text-emerald-500'
+                                                        : 'text-theme-border'
+                                                      }`}
+                                                  />
+                                                ))}
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                        {f.badges && f.badges.length > 0 && (
+                                          <div className="mt-4">
+                                            <h4 className="font-bold text-theme-text-primary mb-2 text-xs uppercase opacity-70">
+                                              Conquistas
+                                            </h4>
+                                            <div className="flex flex-wrap gap-2">
+                                              {f.badges.map((b, idx) => (
+                                                <span
+                                                  key={idx}
+                                                  className="inline-flex items-center px-2 py-1 rounded bg-theme-bg-tertiary border border-theme-border text-xs font-medium text-theme-text-secondary"
+                                                >
+                                                  {b}
+                                                </span>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </motion.div>
+                                  </td>
+                                </tr>
+                              )}
+                            </>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
