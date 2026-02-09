@@ -129,13 +129,23 @@ const Header = () => {
 
             {user ? (
               <div className="flex items-center gap-2 pl-2 border-l border-theme-border/50">
-                <div className="w-8 h-8 rounded-full bg-theme-bg-tertiary border border-theme-border overflow-hidden shrink-0 shadow-sm">
-                  <img
-                    src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.avatar !== 'default' ? user.avatar : user.name}`}
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                  />
+                {/* Avatar with Green Effect & Level */}
+                <div
+                  onClick={() => setIsCharacterSelectorOpen(true)}
+                  className="relative w-10 h-10 flex items-center justify-center cursor-pointer"
+                >
+                  <div className="w-9 h-9 rounded-full bg-theme-bg-secondary border-2 border-green-500 overflow-hidden shadow-[0_0_10px_rgba(34,197,94,0.3)]">
+                    <img
+                      src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.avatar !== 'default' ? user.avatar : user.name}`}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="absolute -bottom-1 z-10 bg-theme-bg-tertiary text-[9px] font-black px-1.5 py-px rounded-full border border-theme-border text-theme-text-primary shadow-sm">
+                    {level}
+                  </div>
                 </div>
+
                 <button
                   onClick={handleLogout}
                   className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
