@@ -118,7 +118,7 @@ const Login = () => {
         ) : (
           <>
             {/* Login Form */}
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            <form className="mt-8 space-y-6" onSubmit={handleSubmit} autoComplete="off">
               {error && (
                 <MotionDiv
                   initial={{ opacity: 0, x: -20 }}
@@ -142,7 +142,7 @@ const Login = () => {
                       id="email-address"
                       name="email"
                       type="email"
-                      autoComplete="email"
+                      autoComplete="off"
                       required
                       className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-3 bg-theme-input-bg border border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium"
                       placeholder="Seu email"
@@ -162,7 +162,7 @@ const Login = () => {
                       id="password"
                       name="password"
                       type="password"
-                      autoComplete="current-password"
+                      autoComplete="new-password"
                       required
                       className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-3 bg-theme-input-bg border border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium"
                       placeholder="Sua senha"
