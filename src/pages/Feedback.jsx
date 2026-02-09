@@ -1,5 +1,5 @@
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Award, BarChart3, Download, FileText, Star, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
