@@ -109,34 +109,35 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
 
         {/* --- MOBILE LAYOUT (md:hidden) --- */}
-        <div className="flex md:hidden items-center justify-between h-16 w-full px-1">
-          {/* Left: Menu Button */}
+        <div className="flex md:hidden items-center h-16 w-full px-2 gap-2">
+
+          {/* 1. Logo (Full, Leftmost) */}
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <div className="w-9 h-9 bg-gradient-to-br from-theme-bg-tertiary to-theme-bg-secondary rounded-xl border border-theme-border flex items-center justify-center shadow-sm">
+              <span className="terra-girando text-xl leading-none">&#x1F30D;</span>
+            </div>
+            <span className="font-display font-bold text-lg text-theme-text-primary leading-none block">
+              ECO<span className="text-green-400">PLAY</span>
+            </span>
+          </Link>
+
+          {/* 2. Menu Button (Immediately after Logo) */}
           <button
             onClick={() => setIsMenuOpen(true)}
-            className="p-2 -ml-2 rounded-lg text-theme-text-secondary hover:bg-theme-bg-tertiary transition-colors relative shrink-0"
+            className="p-2 rounded-lg text-theme-text-secondary hover:bg-theme-bg-tertiary transition-colors relative shrink-0 mr-auto"
             aria-label="Abrir menu"
           >
             <Menu className="w-7 h-7" />
           </button>
 
-          {/* Center-Left: Logo */}
-          <Link to="/" className="flex items-center gap-2 mr-auto ml-2 shrink-0">
-            <div className="w-9 h-9 bg-gradient-to-br from-theme-bg-tertiary to-theme-bg-secondary rounded-xl border border-theme-border flex items-center justify-center shadow-sm">
-              <span className="terra-girando text-xl leading-none">&#x1F30D;</span>
-            </div>
-            <span className="font-display font-bold text-lg hidden xs:block">
-              ECO<span className="text-green-400">PLAY</span>
-            </span>
-          </Link>
-
-          {/* Right Group: Avatar, Theme, Logout */}
-          <div className="flex items-center gap-3 shrink-0">
+          {/* 3. Right Group: Theme, Avatar, Logout (Pushed to Right) */}
+          <div className="flex items-center gap-2 shrink-0">
             <div className="scale-90">
               <ThemeToggle />
             </div>
 
             {user ? (
-              <div className="flex items-center gap-3 pl-3 border-l border-theme-border/50">
+              <div className="flex items-center gap-2 pl-2 border-l border-theme-border/50">
                 <div className="w-8 h-8 rounded-full bg-theme-bg-tertiary border border-theme-border overflow-hidden shrink-0 shadow-sm">
                   <img
                     src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.avatar !== 'default' ? user.avatar : user.name}`}
@@ -153,7 +154,7 @@ const Header = () => {
                 </button>
               </div>
             ) : (
-              <Link to="/login" className="text-sm font-bold text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg bg-green-500/10 hover:bg-green-500/20 transition-colors">
+              <Link to="/login" className="text-sm font-bold text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg bg-green-500/10 hover:bg-green-500/20 transition-colors ml-2">
                 ENTRAR
               </Link>
             )}
