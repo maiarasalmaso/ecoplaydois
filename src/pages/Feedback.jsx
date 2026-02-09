@@ -704,7 +704,8 @@ const Feedback = () => {
           )}
         </AnimatePresence>
       </div>
-      );
+    </div>
+  );
 };
 
-      export default Feedback;
+export default Feedback;
