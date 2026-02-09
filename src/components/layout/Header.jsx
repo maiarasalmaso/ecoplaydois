@@ -112,7 +112,7 @@ const Header = () => {
         <div className="flex md:hidden items-center h-16 w-full px-2 gap-2">
 
           {/* 1. Logo (Full, Leftmost) */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
+          <Link to="/" className="flex items-center gap-2 shrink-0 mr-auto">
             <div className="w-9 h-9 bg-gradient-to-br from-theme-bg-tertiary to-theme-bg-secondary rounded-xl border border-theme-border flex items-center justify-center shadow-sm">
               <span className="terra-girando text-xl leading-none">&#x1F30D;</span>
             </div>
@@ -121,16 +121,7 @@ const Header = () => {
             </span>
           </Link>
 
-          {/* 2. Menu Button (Immediately after Logo) */}
-          <button
-            onClick={() => setIsMenuOpen(true)}
-            className="p-2 rounded-lg text-theme-text-secondary hover:bg-theme-bg-tertiary transition-colors relative shrink-0 mr-auto"
-            aria-label="Abrir menu"
-          >
-            <Menu className="w-7 h-7" />
-          </button>
-
-          {/* 3. Right Group: Theme, Avatar, Logout (Pushed to Right) */}
+          {/* 2. Middle/Right Group: Theme, Avatar, Logout */}
           <div className="flex items-center gap-2 shrink-0">
             <div className="scale-90">
               <ThemeToggle />
@@ -159,6 +150,15 @@ const Header = () => {
               </Link>
             )}
           </div>
+
+          {/* 3. Menu Button (Far Right, after Logout) */}
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className="p-2 rounded-lg text-theme-text-secondary hover:bg-theme-bg-tertiary transition-colors relative shrink-0 ml-1"
+            aria-label="Abrir menu"
+          >
+            <Menu className="w-7 h-7" />
+          </button>
         </div>
 
         {/* --- DESKTOP LAYOUT (hidden md:flex) --- */}
