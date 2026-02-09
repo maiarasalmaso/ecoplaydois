@@ -109,57 +109,51 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
 
         {/* --- MOBILE LAYOUT (md:hidden) --- */}
-        <div className="flex md:hidden items-center justify-between h-16 w-full">
-          {/* Left Group: Menu + Brand + Avatar/Theme */}
-          <div className="flex items-center gap-2 sm:gap-4 overflow-hidden">
-            {/* 1. Menu Button (Hamburger) */}
-            <button
-              onClick={() => setIsMenuOpen(true)}
-              className={mobileBtnClass}
-              aria-label="Abrir menu"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
+        <div className="flex md:hidden items-center justify-between h-16 w-full px-1">
+          {/* Left: Menu Button */}
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className="p-2 -ml-2 rounded-lg text-theme-text-secondary hover:bg-theme-bg-tertiary transition-colors relative shrink-0"
+            aria-label="Abrir menu"
+          >
+            <Menu className="w-7 h-7" />
+          </button>
 
-            {/* 2. Logo (Icon only on very small, Full on small+) */}
-            <Link to="/" className="flex items-center gap-1 shrink-0">
-              <div className="w-8 h-8 bg-gradient-to-br from-theme-bg-tertiary to-theme-bg-secondary rounded-lg border border-theme-border flex items-center justify-center shadow-sm">
-                <span className="terra-girando text-lg leading-none">&#x1F30D;</span>
-              </div>
-              <span className="font-display font-bold text-lg hidden sm:block">
-                ECO<span className="text-green-400">PLAY</span>
-              </span>
-            </Link>
+          {/* Center-Left: Logo */}
+          <Link to="/" className="flex items-center gap-2 mr-auto ml-2 shrink-0">
+            <div className="w-9 h-9 bg-gradient-to-br from-theme-bg-tertiary to-theme-bg-secondary rounded-xl border border-theme-border flex items-center justify-center shadow-sm">
+              <span className="terra-girando text-xl leading-none">&#x1F30D;</span>
+            </div>
+            <span className="font-display font-bold text-lg hidden xs:block">
+              ECO<span className="text-green-400">PLAY</span>
+            </span>
+          </Link>
 
-            {/* 2b. Avatar & Theme (Hide on very narrow screens < 340px) */}
-            <div className="flex items-center gap-2 border-l border-theme-border/50 pl-2 ml-1">
-              {user && (
-                <div className="w-8 h-8 rounded-full bg-theme-bg-tertiary border border-theme-border overflow-hidden shrink-0">
+          {/* Right Group: Avatar, Theme, Logout */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="scale-90">
+              <ThemeToggle />
+            </div>
+
+            {user ? (
+              <div className="flex items-center gap-3 pl-3 border-l border-theme-border/50">
+                <div className="w-8 h-8 rounded-full bg-theme-bg-tertiary border border-theme-border overflow-hidden shrink-0 shadow-sm">
                   <img
                     src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.avatar !== 'default' ? user.avatar : user.name}`}
                     alt="Avatar"
                     className="w-full h-full object-cover"
                   />
                 </div>
-              )}
-              <div className="scale-75 origin-left">
-                <ThemeToggle />
+                <button
+                  onClick={handleLogout}
+                  className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                  title="Sair"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
               </div>
-            </div>
-          </div>
-
-          {/* 3. Extreme Right: Logout Button */}
-          <div className="flex items-center pl-2">
-            {user ? (
-              <button
-                onClick={handleLogout}
-                className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                title="Sair"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
             ) : (
-              <Link to="/login" className="text-sm font-bold text-green-400 hover:underline">
+              <Link to="/login" className="text-sm font-bold text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg bg-green-500/10 hover:bg-green-500/20 transition-colors">
                 ENTRAR
               </Link>
             )}
