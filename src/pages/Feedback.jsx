@@ -275,19 +275,7 @@ const Feedback = () => {
   const level = useMemo(() => computeLevel(score), [score]);
   const badges = useMemo(() => computeBadges({ ux, learning }), [ux, learning]);
 
-  const responses = useMemo(() => {
-    void submitted;
-    return listFeedbackResponses();
-  }, [submitted]);
-  const summary = useMemo(
-    () =>
-      computeFeedbackSummary(responses, {
-        uxLikertIds: UX_LIKERT.map((q) => q.id),
-        learningLikertIds: LEARNING_LIKERT.map((q) => q.id),
-      }),
-    [responses]
-  );
-
+  /* Restoring critical state logic */
   const canSubmit = useMemo(() => {
     const uxDone = countAnsweredLikert(ux, UX_LIKERT.map((q) => q.id)) === UX_LIKERT.length;
     const learningDone = countAnsweredLikert(learning, LEARNING_LIKERT.map((q) => q.id)) === LEARNING_LIKERT.length;
@@ -300,7 +288,6 @@ const Feedback = () => {
     showToast._t = window.setTimeout(() => setToast(null), 2400);
   }, []);
 
-  /* Toasts logic refactored to side-effects */
   const uxToastShown = useRef(false);
   const learningToastShown = useRef(false);
 
@@ -329,12 +316,19 @@ const Feedback = () => {
   }, []);
 
   const exportCsv = useCallback(() => {
+    const responses = listFeedbackResponses();
     const csv = buildFeedbackCsv(responses);
     const date = new Date().toISOString().slice(0, 10);
     downloadTextFile(`ecoplay - avaliacoes - ${date}.csv`, csv, 'text/csv;charset=utf-8');
-  }, [responses]);
+  }, []);
 
   const exportPdf = useCallback(() => {
+    const responses = listFeedbackResponses();
+    const summary = computeFeedbackSummary(responses, {
+      uxLikertIds: UX_LIKERT.map((q) => q.id),
+      learningLikertIds: LEARNING_LIKERT.map((q) => q.id),
+    });
+
     const rows = responses
       .slice(0, 12)
       .map((r) => {
@@ -368,7 +362,7 @@ const Feedback = () => {
       '</div>',
     ].join('');
     openPrintableReport({ title: 'EcoPlay - Avaliação', html });
-  }, [responses, summary]);
+  }, []);
 
   const submit = useCallback(async () => {
     if (!canSubmit) return;
