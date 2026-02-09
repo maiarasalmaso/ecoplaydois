@@ -271,100 +271,102 @@ const Header = () => {
       </div>
 
       {/* --- SIDE DRAWER MENU (Mobile) --- */}
-      <AnimatePresence>
-        {isMenuOpen && createPortal(
-          <div className="fixed inset-0 z-[9999] flex md:hidden">
-            {/* 1. Backdrop Overlay (Dark & Blur) */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMenuOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
+      {createPortal(
+        <AnimatePresence>
+          {isMenuOpen && (
+            <div className="fixed inset-0 z-[9999] flex md:hidden" key="mobile-menu-container">
+              {/* 1. Backdrop Overlay (Dark & Blur) */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsMenuOpen(false)}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              />
 
-            {/* 2. Side Panel (Slide In) */}
-            <motion.div
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="relative w-[80%] max-w-sm h-full bg-theme-bg-tertiary border-r border-theme-border shadow-2xl overflow-y-auto flex flex-col"
-            >
-              {/* Header of Drawer */}
-              <div className="p-6 border-b border-theme-border/50 bg-theme-bg-secondary/50">
-                <div className="flex items-center justify-between mb-6">
-                  <span className="font-display font-bold text-xl text-theme-text-primary">Menu</span>
-                  <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-theme-bg-primary rounded-full hover:bg-red-500/10 hover:text-red-400 transition-colors">
-                    <X size={20} />
-                  </button>
+              {/* 2. Side Panel (Slide In) */}
+              <motion.div
+                initial={{ x: '-100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '-100%' }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="relative w-[80%] max-w-sm h-full bg-theme-bg-tertiary border-r border-theme-border shadow-2xl overflow-y-auto flex flex-col"
+              >
+                {/* Header of Drawer */}
+                <div className="p-6 border-b border-theme-border/50 bg-theme-bg-secondary/50">
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="font-display font-bold text-xl text-theme-text-primary">Menu</span>
+                    <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-theme-bg-primary rounded-full hover:bg-red-500/10 hover:text-red-400 transition-colors">
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  {/* Player Status (Highlight) */}
+                  {user && (
+                    <div className="flex gap-4">
+                      {/* Streak Box */}
+                      <div className="flex-1 bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-3 flex flex-col items-center justify-center">
+                        <Flame className="w-6 h-6 text-orange-500 mb-1" />
+                        <span className="text-xs text-theme-text-secondary font-bold uppercase">Sequência</span>
+                        <span className="text-lg font-black text-theme-text-primary">{streak} Dias</span>
+                      </div>
+                      {/* XP Box */}
+                      <div className="flex-1 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-3 flex flex-col items-center justify-center">
+                        <Trophy className="w-6 h-6 text-green-400 mb-1" />
+                        <span className="text-xs text-theme-text-secondary font-bold uppercase">Nível {level}</span>
+                        <span className="text-lg font-black text-theme-text-primary">{score} XP</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Player Status (Highlight) */}
-                {user && (
-                  <div className="flex gap-4">
-                    {/* Streak Box */}
-                    <div className="flex-1 bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-3 flex flex-col items-center justify-center">
-                      <Flame className="w-6 h-6 text-orange-500 mb-1" />
-                      <span className="text-xs text-theme-text-secondary font-bold uppercase">Sequência</span>
-                      <span className="text-lg font-black text-theme-text-primary">{streak} Dias</span>
-                    </div>
-                    {/* XP Box */}
-                    <div className="flex-1 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-3 flex flex-col items-center justify-center">
-                      <Trophy className="w-6 h-6 text-green-400 mb-1" />
-                      <span className="text-xs text-theme-text-secondary font-bold uppercase">Nível {level}</span>
-                      <span className="text-lg font-black text-theme-text-primary">{score} XP</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Navigation Links */}
-              <nav className="flex-1 p-6 space-y-3">
-                <Link to="/" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-xl bg-theme-bg-primary border border-theme-border font-bold text-theme-text-primary hover:border-green-400/50 transition-all group">
-                  <div className="w-10 h-10 rounded-lg bg-theme-bg-secondary flex items-center justify-center group-hover:bg-green-500/10 group-hover:text-green-400 transition-colors">
-                    <Home size={20} />
-                  </div>
-                  <span className="text-lg">Início</span>
-                </Link>
-
-                <Link to="/games" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-xl bg-theme-bg-primary border border-theme-border font-bold text-theme-text-primary hover:border-green-400/50 transition-all group">
-                  <div className="w-10 h-10 rounded-lg bg-theme-bg-secondary flex items-center justify-center group-hover:bg-green-500/10 group-hover:text-green-400 transition-colors">
-                    <Gamepad2 size={20} />
-                  </div>
-                  <span className="text-lg">Jogos</span>
-                </Link>
-
-                <Link to="/leaderboard" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-xl bg-theme-bg-primary border border-theme-border font-bold text-theme-text-primary hover:border-green-400/50 transition-all group">
-                  <div className="w-10 h-10 rounded-lg bg-theme-bg-secondary flex items-center justify-center group-hover:bg-green-500/10 group-hover:text-green-400 transition-colors">
-                    <Trophy size={20} />
-                  </div>
-                  <span className="text-lg">Ranking</span>
-                </Link>
-
-                {user && (
-                  <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-xl bg-theme-bg-primary border border-theme-border font-bold text-theme-text-primary hover:border-green-400/50 transition-all group">
+                {/* Navigation Links */}
+                <nav className="flex-1 p-6 space-y-3">
+                  <Link to="/" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-xl bg-theme-bg-primary border border-theme-border font-bold text-theme-text-primary hover:border-green-400/50 transition-all group">
                     <div className="w-10 h-10 rounded-lg bg-theme-bg-secondary flex items-center justify-center group-hover:bg-green-500/10 group-hover:text-green-400 transition-colors">
-                      <User size={20} />
+                      <Home size={20} />
                     </div>
-                    <span className="text-lg">Meu Perfil</span>
+                    <span className="text-lg">Início</span>
                   </Link>
-                )}
-              </nav>
 
-              {/* Drawer Footer */}
-              <div className="p-6 border-t border-theme-border bg-theme-bg-secondary/30">
-                {canShowFeedbackCta && (
-                  <Link to="/avaliacao" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-green-500/10 text-green-400 font-bold border border-green-500/20 hover:bg-green-500/20 transition-colors">
-                    <Star size={18} /> Nos Avalie
+                  <Link to="/games" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-xl bg-theme-bg-primary border border-theme-border font-bold text-theme-text-primary hover:border-green-400/50 transition-all group">
+                    <div className="w-10 h-10 rounded-lg bg-theme-bg-secondary flex items-center justify-center group-hover:bg-green-500/10 group-hover:text-green-400 transition-colors">
+                      <Gamepad2 size={20} />
+                    </div>
+                    <span className="text-lg">Jogos</span>
                   </Link>
-                )}
-              </div>
-            </motion.div>
-          </div>,
-          document.body
-        )}
-      </AnimatePresence>
+
+                  <Link to="/leaderboard" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-xl bg-theme-bg-primary border border-theme-border font-bold text-theme-text-primary hover:border-green-400/50 transition-all group">
+                    <div className="w-10 h-10 rounded-lg bg-theme-bg-secondary flex items-center justify-center group-hover:bg-green-500/10 group-hover:text-green-400 transition-colors">
+                      <Trophy size={20} />
+                    </div>
+                    <span className="text-lg">Ranking</span>
+                  </Link>
+
+                  {user && (
+                    <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-xl bg-theme-bg-primary border border-theme-border font-bold text-theme-text-primary hover:border-green-400/50 transition-all group">
+                      <div className="w-10 h-10 rounded-lg bg-theme-bg-secondary flex items-center justify-center group-hover:bg-green-500/10 group-hover:text-green-400 transition-colors">
+                        <User size={20} />
+                      </div>
+                      <span className="text-lg">Meu Perfil</span>
+                    </Link>
+                  )}
+                </nav>
+
+                {/* Drawer Footer */}
+                <div className="p-6 border-t border-theme-border bg-theme-bg-secondary/30">
+                  {canShowFeedbackCta && (
+                    <Link to="/avaliacao" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-green-500/10 text-green-400 font-bold border border-green-500/20 hover:bg-green-500/20 transition-colors">
+                      <Star size={18} /> Nos Avalie
+                    </Link>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       <CharacterSelector
         isOpen={isCharacterSelectorOpen}
