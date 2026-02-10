@@ -240,6 +240,8 @@ const Feedback = () => {
   const [toast, setToast] = useState(null);
   const [checking, setChecking] = useState(true);
   const toastTimer = useRef(null);
+  const uxToastShown = useRef(false);
+  const learningToastShown = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -251,14 +253,6 @@ const Feedback = () => {
     });
     return () => { mounted = false; };
   }, []);
-
-  if (checking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-theme-bg-primary">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[color:var(--feedback-accent)]"></div>
-      </div>
-    );
-  }
 
   const totalFields = UX_LIKERT.length + LEARNING_LIKERT.length + UX_OPEN.length;
   const answeredFields = useMemo(() => {
@@ -274,7 +268,6 @@ const Feedback = () => {
   const level = useMemo(() => computeLevel(score), [score]);
   const badges = useMemo(() => computeBadges({ ux, learning }), [ux, learning]);
 
-  /* Restoring critical state logic */
   const canSubmit = useMemo(() => {
     const uxDone = countAnsweredLikert(ux, UX_LIKERT.map((q) => q.id)) === UX_LIKERT.length;
     const learningDone = countAnsweredLikert(learning, LEARNING_LIKERT.map((q) => q.id)) === LEARNING_LIKERT.length;
@@ -286,9 +279,6 @@ const Feedback = () => {
     if (toastTimer.current) window.clearTimeout(toastTimer.current);
     toastTimer.current = window.setTimeout(() => setToast(null), 2400);
   }, []);
-
-  const uxToastShown = useRef(false);
-  const learningToastShown = useRef(false);
 
   useEffect(() => {
     const uxDone = countAnsweredLikert(ux, UX_LIKERT.map((q) => q.id)) === UX_LIKERT.length;
@@ -383,7 +373,7 @@ const Feedback = () => {
         updateStat('feedback_submissions', 1);
         unlockBadge('feedback_responder');
       }
-      playCelebration(); // Toca som de vitória
+      playCelebration();
       setActiveSection('report');
       showToast({ type: 'ok', text: 'Missão concluída! Obrigado por validar a proposta.' });
     } catch (e) {
@@ -393,6 +383,15 @@ const Feedback = () => {
       setSubmitting(false);
     }
   }, [badges, canSubmit, learning, level, score, showToast, unlockBadge, updateStat, user, ux]);
+
+  /* Loading state — rendered AFTER all hooks */
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-theme-bg-primary">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[color:var(--feedback-accent)]"></div>
+      </div>
+    );
+  }
 
   return (
     <div
