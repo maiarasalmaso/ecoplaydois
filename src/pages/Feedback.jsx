@@ -1,8 +1,8 @@
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Award, BarChart3, Download, FileText, Star, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import confetti from 'canvas-confetti';
 import { useAuth } from '../context/AuthContext';
 import { useGameState } from '../context/GameStateContext';
 import {
@@ -14,6 +14,7 @@ import {
   saveFeedbackResponse,
 } from '../utils/feedbackStore';
 import { checkUserHasFeedback } from '../services/remoteDb';
+import { playMagicPop, playCelebration, playHover, playClick } from '../utils/soundEffects';
 
 const UX_LIKERT = [
   { id: 'ux_navigation', label: 'A navega\u00e7\u00e3o \u00e9 intuitiva.' },
@@ -77,9 +78,6 @@ const computeBadges = ({ ux, learning }) => {
   if (uxDone && learningDone) badges.push('Validador(a) Mestre');
   return badges;
 };
-
-import { playMagicPop, playCelebration, playHover, playClick } from '../utils/soundEffects';
-import confetti from 'canvas-confetti';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -241,6 +239,7 @@ const Feedback = () => {
   const [submitted, setSubmitted] = useState(null);
   const [toast, setToast] = useState(null);
   const [checking, setChecking] = useState(true);
+  const toastTimer = useRef(null);
 
   useEffect(() => {
     let mounted = true;
@@ -284,8 +283,8 @@ const Feedback = () => {
 
   const showToast = useCallback((payload) => {
     setToast(payload);
-    window.clearTimeout(showToast._t);
-    showToast._t = window.setTimeout(() => setToast(null), 2400);
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(null), 2400);
   }, []);
 
   const uxToastShown = useRef(false);
