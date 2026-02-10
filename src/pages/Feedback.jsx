@@ -570,17 +570,9 @@ const Feedback = () => {
 
                   <div className="bg-theme-bg-secondary/70 border border-theme-border rounded-3xl p-6 text-center shadow-lg sticky top-6">
                     <div className="flex justify-center mb-4">
-                      <motion.div
-                        animate={{
-                          scale: [1, 1.2, 1],
-                          rotate: [0, 10, -10, 0],
-                          filter: ['brightness(1)', 'brightness(1.3)', 'brightness(1)'],
-                        }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-[0_0_30px_rgba(251,191,36,0.4)]"
-                      >
-                        <Star className="w-12 h-12 text-white fill-white" />
-                      </motion.div>
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400/20 to-orange-500/20 border border-amber-400/30 flex items-center justify-center">
+                        <Trophy className="w-10 h-10 text-amber-400" />
+                      </div>
                     </div>
 
                     <h3 className="text-2xl font-display font-bold text-theme-text-primary">
