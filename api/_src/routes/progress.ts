@@ -81,7 +81,11 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
             const productionPerSec = calculateProduction(savedModules);
 
             if (productionPerSec > 0) {
-                const earnedEnergy = productionPerSec * secondsOffline;
+                // 🔒 CAP: Maximum 24 hours of offline production
+                const MAX_OFFLINE_SECONDS = 24 * 60 * 60; // 24 hours
+                const cappedOfflineTime = Math.min(secondsOffline, MAX_OFFLINE_SECONDS);
+
+                const earnedEnergy = Math.floor(productionPerSec * cappedOfflineTime);
                 const earnedCredits = Math.floor(earnedEnergy * 0.1); // 10% rate
 
                 // Update the response object (not DB yet, client will sync back)
@@ -89,8 +93,12 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
                 const currentEnergy = Number(row.energy || row.stats?.saved_energy || 0);
                 const currentCredits = Number(row.eco_credits || row.stats?.saved_credits || 0);
 
-                row.energy = currentEnergy + earnedEnergy;
-                row.eco_credits = currentCredits + earnedCredits;
+                // 🔒 CAP: Maximum reasonable values
+                const MAX_ENERGY = 1_000_000_000; // 1 billion
+                const MAX_CREDITS = 100_000_000; // 100 million
+
+                row.energy = Math.min(currentEnergy + earnedEnergy, MAX_ENERGY);
+                row.eco_credits = Math.min(currentCredits + earnedCredits, MAX_CREDITS);
 
                 // Update the stats JSON too for compatibility with older frontends
                 if (row.stats) {
@@ -98,7 +106,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
                     row.stats.saved_credits = row.eco_credits;
                 }
 
-                console.log(`[API] Server calculated offline gains for user ${userId}: +${earnedEnergy} Energy (Offline for ${secondsOffline}s)`);
+                console.log(`[API] Server calculated offline gains for user ${userId}: +${earnedEnergy} Energy (Offline for ${cappedOfflineTime}s, capped from ${secondsOffline}s)`);
             }
         }
 
@@ -191,10 +199,14 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
 
         const result = await client.query(queryText, values);
 
-        // 3. Sync User Score (User Table) - Atomic with this transaction
-        await client.query('UPDATE users SET score = $1 WHERE id = $2', [score || 0, userId]);
+        // 3. Sync User Score and Time Spent (User Table) - Atomic with this transaction
+        const timeSpent = Number(stats?.timeSpentSeconds) || 0;
+        await client.query(
+            'UPDATE users SET score = $1, time_spent = $2 WHERE id = $3',
+            [score || 0, timeSpent, userId]
+        );
 
-        console.log(`[API] Progress saved successfully for user ${userId} (New Version: ${result.rows[0].version})`);
+        console.log(`[API] Progress saved successfully for user ${userId} (New Version: ${result.rows[0].version}, Time: ${timeSpent}s)`);
 
         return { status: 200, data: result.rows[0] };
     });

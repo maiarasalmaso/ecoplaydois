@@ -137,8 +137,11 @@ router.post('/login', async (req: Request, res: Response) => {
 
         // Update streak in database
         if (newStreak !== user.streak) {
-            await query('UPDATE users SET streak = $1 WHERE id = $2', [newStreak, user.id]);
+            await query('UPDATE users SET streak = $1, last_login = NOW() WHERE id = $2', [newStreak, user.id]);
             user.streak = newStreak;
+        } else {
+            // Update last_login even if streak didn't change
+            await query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
         }
         // ========== END STREAK LOGIC ==========
 

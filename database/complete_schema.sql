@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS users (
     avatar VARCHAR(255) DEFAULT NULL,
     score INTEGER DEFAULT 0,
     streak INTEGER DEFAULT 0,
-    time_spent INTEGER DEFAULT 0
+    time_spent INTEGER DEFAULT 0,
+    last_login TIMESTAMP WITH TIME ZONE DEFAULT NULL
 );
 
 -- 2. PROGRESS TABLE (with version column included)
@@ -64,6 +65,7 @@ CREATE INDEX IF NOT EXISTS idx_game_scores_user ON game_scores(user_id);
 CREATE INDEX IF NOT EXISTS idx_game_scores_game ON game_scores(game_id);
 CREATE INDEX IF NOT EXISTS idx_users_score_desc ON users(score DESC);
 CREATE INDEX IF NOT EXISTS idx_progress_version ON progress(local_user_id, version);
+CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login DESC);
 
 -- 6. VERSION AUTO-INCREMENT TRIGGER
 CREATE OR REPLACE FUNCTION increment_progress_version()
