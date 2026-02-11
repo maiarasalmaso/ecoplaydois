@@ -6,85 +6,35 @@ import { KeyRound, Lock, LogIn, ShieldCheck } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 
-const DEFAULT_LOGIN = '';
-const DEFAULT_PASSWORD = '';
-
 const ADMIN_REMEMBER_KEY = 'ecoplay.admin.remember';
 const ADMIN_RATE_KEY = 'ecoplay.admin.rate';
-
-const ADMIN_ACCENT = {
-  dark: {
-    color: '#fb923c', // Orange-400
-    colorAlt: '#f97316', // Orange-500
-    surface: 'rgba(251,146,60,0.2)',
-    border: 'rgba(251,146,60,0.6)',
-    glow: 'rgba(251,146,60,0.32)',
-  },
-  light: {
-    color: '#f97316', // Orange-500
-    colorAlt: '#ea580c', // Orange-600
-    surface: 'rgba(249,115,22,0.18)',
-    border: 'rgba(249,115,22,0.5)',
-    glow: 'rgba(249,115,22,0.28)',
-  },
-};
-
-const normalize = (value) => String(value || '').trim();
-const nowMs = () => Date.now();
-const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-
-const readJson = (key) => {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-};
-
-const writeJson = (key, value) => {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch { }
-};
-
-const getRateState = () => {
-  const state = readJson(ADMIN_RATE_KEY) || {};
-  return {
-    failedCount: Number(state.failedCount) || 0,
-    lockedUntil: Number(state.lockedUntil) || 0,
-  };
-};
 
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { login: authLogin } = useAuth();
   const { theme } = useTheme();
 
-  const [login, setLogin] = useState(DEFAULT_LOGIN);
-  const [password, setPassword] = useState(DEFAULT_PASSWORD);
+  const [login, setLogin] = useState('');
+  const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [lockedUntil, setLockedUntil] = useState(() => getRateState().lockedUntil || 0);
+  const [lockedUntil, setLockedUntil] = useState(0);
 
   const isLight = theme === 'light';
-  const accent = isLight ? ADMIN_ACCENT.light : ADMIN_ACCENT.dark;
-  const contrast = isLight ? '#f8fafc' : '#0b1323';
+  const orangeAccent = '#f97316'; // Laranja vibrante da imagem
+  const accentGlow = 'rgba(249, 115, 22, 0.3)';
 
   const lockSeconds = useMemo(() => {
-    if (!lockedUntil) return 0;
-    const diff = lockedUntil - nowMs();
+    const diff = lockedUntil - Date.now();
     return diff > 0 ? Math.ceil(diff / 1000) : 0;
   }, [lockedUntil]);
 
   useEffect(() => {
-    const state = getRateState();
-    if (state.lockedUntil > nowMs()) {
-      setLockedUntil(state.lockedUntil);
-      const timer = setInterval(() => {
-        const remaining = state.lockedUntil - nowMs();
-        if (remaining <= 0) {
-          setLockedUntil(0);
-          clearInterval(timer);
-        }
-      }, 1000);
-      return () => clearInterval(timer);
+    const savedRate = localStorage.getItem(ADMIN_RATE_KEY);
+    if (savedRate) {
+      const state = JSON.parse(savedRate);
+      if (state.lockedUntil > Date.now()) setLockedUntil(state.lockedUntil);
     }
   }, []);
 
@@ -93,150 +43,129 @@ const AdminLogin = () => {
     if (submitting || lockSeconds > 0) return;
 
     setError('');
-    const l = normalize(login);
-    const p = normalize(password);
-
-    if (!l || !p) {
-      setError('Preencha login e senha.');
-      return;
-    }
-
-    if (!isEmail(l)) {
-      setError('Informe um email válido.');
-      return;
-    }
-
-    setSubmitting(true);
-
     try {
-      await authLogin(l, p);
+      setSubmitting(true);
+      await authLogin(login.trim(), password.trim());
 
-      // Validar role ADMIN diretamente do localStorage após login sucesso
       const token = localStorage.getItem('ecoplay_token');
       if (token) {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.role !== 'ADMIN') {
-          throw new Error('Acesso negado: Apenas administradores.');
-        }
+        if (payload.role !== 'ADMIN') throw new Error('Acesso negado: Apenas administradores.');
         navigate('/admin/painel', { replace: true });
       }
     } catch (err) {
-      console.error('[AdminLogin] Error:', err);
       const msg = err.response?.data?.error || err.message || 'Falha no login.';
       setError(msg);
 
-      // Lógica simples de brute-force
-      const state = getRateState();
-      const newFailed = state.failedCount + 1;
-      if (newFailed >= 5) {
-        const lockTime = nowMs() + 30000;
-        setLockedUntil(lockTime);
-        writeJson(ADMIN_RATE_KEY, { failedCount: 0, lockedUntil: lockTime });
-      } else {
-        writeJson(ADMIN_RATE_KEY, { failedCount: newFailed, lockedUntil: 0 });
-      }
+      // Bloqueio simples
+      const lockTime = Date.now() + 30000;
+      setLockedUntil(lockTime);
+      localStorage.setItem(ADMIN_RATE_KEY, JSON.stringify({ lockedUntil: lockTime }));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center py-12 px-4 relative overflow-y-auto bg-theme-bg-primary"
-      style={{
-        '--admin-accent': accent.color,
-        '--admin-accent-2': accent.colorAlt,
-        '--admin-accent-glow': accent.glow,
-        '--admin-contrast': contrast,
-      }}
-    >
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-[#0b1323] px-4 py-12 transition-colors duration-500 overflow-y-auto">
+      {/* Background Dots - Como na imagem */}
+      <div className="fixed inset-0 pointer-events-none opacity-20">
+        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-orange-400 rounded-full blur-[1px]"></div>
+        <div className="absolute top-1/2 right-1/4 w-1.5 h-1.5 bg-orange-500 rounded-full blur-[1px]"></div>
+        <div className="absolute bottom-1/4 left-1/3 w-3 h-3 bg-orange-300 rounded-full blur-[1px]"></div>
+      </div>
+
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full space-y-8 bg-theme-card-bg/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-theme-border relative z-10"
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-md w-full bg-white dark:bg-slate-900/90 p-8 sm:p-10 rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 relative z-10"
       >
-        <div className="text-center">
-          <div
-            className="mx-auto h-16 w-16 rounded-2xl flex items-center justify-center shadow-lg transform rotate-2 mb-6"
-            style={{
-              backgroundImage: 'linear-gradient(135deg, var(--admin-accent), var(--admin-accent-2))',
-              boxShadow: '0 18px 35px var(--admin-accent-glow)',
-            }}
-          >
-            <ShieldCheck className="h-8 w-8 text-white" />
+        {/* Header Icon */}
+        <div className="flex justify-center mb-8">
+          <div className="w-20 h-20 rounded-[28px] bg-orange-600 flex items-center justify-center shadow-[0_15px_30px_rgba(234,88,12,0.4)] transform hover:rotate-3 transition-transform duration-300">
+            <ShieldCheck className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-display font-bold text-theme-text-primary">ADMIN</h1>
-          <p className="mt-2 text-sm text-theme-text-tertiary font-mono">Painel de Controle</p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        {/* Title */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-display font-black text-slate-800 dark:text-white tracking-tight mb-2 uppercase">ADMIN</h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight">Acesso restrito à administração.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-xl text-sm text-center font-medium flex items-center justify-center gap-2">
-              <Lock className="w-4 h-4" />
-              <span>{error}</span>
+            <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm font-bold text-center border border-red-100 animate-shake">
+              {error}
             </div>
           )}
 
-          {lockSeconds > 0 && (
-            <div className="bg-orange-500/10 border border-orange-500/50 text-orange-500 p-3 rounded-xl text-sm text-center font-medium">
-              Bloqueado por segurança. Tente em {lockSeconds}s.
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-theme-text-secondary pl-1 uppercase tracking-wider">Email Admin</label>
-              <div className="relative group">
-                <KeyRound className="absolute left-3.5 top-4 text-theme-text-tertiary group-focus-within:text-[color:var(--admin-accent)] transition-colors w-5 h-5 pointer-events-none" />
-                <input
-                  type="email"
-                  inputMode="email"
-                  required
-                  className="appearance-none rounded-xl block w-full pl-11 px-4 py-4 text-base bg-theme-input-bg border-2 border-theme-input-border text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)] focus:border-[color:var(--admin-accent)] transition-all font-medium touch-manipulation"
-                  placeholder="admin@ecoplay.com"
-                  value={login}
-                  onChange={(e) => setLogin(e.target.value)}
-                  style={{ fontSize: '16px' }}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-theme-text-secondary pl-1 uppercase tracking-wider">Senha Secreta</label>
-              <div className="relative group">
-                <Lock className="absolute left-3.5 top-4 text-theme-text-tertiary group-focus-within:text-[color:var(--admin-accent)] transition-colors w-5 h-5 pointer-events-none" />
-                <input
-                  type="password"
-                  required
-                  className="appearance-none rounded-xl block w-full pl-11 px-4 py-4 text-base bg-theme-input-bg border-2 border-theme-input-border text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)] focus:border-[color:var(--admin-accent)] transition-all font-medium touch-manipulation"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{ fontSize: '16px' }}
-                />
-              </div>
+          {/* Email field */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-600 dark:text-slate-300 ml-1">Email</label>
+            <div className="relative group">
+              <input
+                type="email"
+                required
+                className="w-full h-14 px-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-base focus:border-orange-500 focus:outline-none transition-all duration-300 font-medium"
+                value={login}
+                onChange={(e) => setLogin(e.target.value)}
+                style={{ fontSize: '16px' }}
+              />
             </div>
           </div>
 
+          {/* Password field */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-600 dark:text-slate-300 ml-1">Senha</label>
+            <div className="relative group">
+              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="password"
+                required
+                className="w-full h-14 pl-14 pr-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-base focus:border-orange-500 focus:outline-none transition-all duration-300 font-medium"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{ fontSize: '16px' }}
+              />
+            </div>
+          </div>
+
+          {/* Helper links */}
+          <div className="flex items-center justify-between px-1">
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                className="w-5 h-5 rounded-lg border-2 border-slate-300 text-orange-600 focus:ring-orange-500"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+              />
+              <span className="text-sm font-bold text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">Lembrar</span>
+            </label>
+            <a href="#" className="text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-orange-600 transition-colors">Esqueci a senha</a>
+          </div>
+
+          {/* Action Button */}
           <button
             type="submit"
             disabled={submitting || lockSeconds > 0}
-            className="group relative w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent text-base font-bold rounded-xl text-white bg-[color:var(--admin-accent)] hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[color:var(--admin-accent)] transition-all shadow-lg hover:shadow-[0_0_20px_var(--admin-accent-glow)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+            className="w-full h-16 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 shadow-[0_10px_25px_rgba(249,115,22,0.3)] hover:shadow-[0_15px_35px_rgba(249,115,22,0.4)] hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 group"
           >
             {submitting ? (
-              <span className="flex items-center gap-2">ENTRANDO...</span>
+              <span className="flex items-center gap-2">PROCESSANDO...</span>
             ) : (
               <>
-                <LogIn className="w-5 h-5" />
-                <span>ACESSAR PAINEL</span>
+                <LogIn className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" />
+                <span>ENTRAR</span>
               </>
             )}
           </button>
         </form>
 
-        <div className="text-center pt-4">
-          <Link to="/login" className="text-sm font-semibold text-theme-text-tertiary hover:text-theme-text-primary transition-colors">
-            Voltar para o App
+        {/* Footer */}
+        <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 text-center">
+          <Link to="/privacy" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-orange-600 transition-colors">
+            Segurança e Privacidade
           </Link>
         </div>
       </motion.div>
