@@ -137,11 +137,22 @@ router.post('/login', async (req: Request, res: Response) => {
 
         // Update streak in database
         if (newStreak !== user.streak) {
-            await query('UPDATE users SET streak = $1, last_login = NOW() WHERE id = $2', [newStreak, user.id]);
+            try {
+                await query('UPDATE users SET streak = $1, last_login = NOW() WHERE id = $2', [newStreak, user.id]);
+            } catch (error) {
+                // Fallback if last_login column doesn't exist yet
+                console.warn('[Auth] last_login column may not exist, updating only streak');
+                await query('UPDATE users SET streak = $1 WHERE id = $2', [newStreak, user.id]);
+            }
             user.streak = newStreak;
         } else {
             // Update last_login even if streak didn't change
-            await query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
+            try {
+                await query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
+            } catch (error) {
+                // Silently fail if last_login column doesn't exist yet
+                console.warn('[Auth] last_login column does not exist yet, skipping update');
+            }
         }
         // ========== END STREAK LOGIC ==========
 
