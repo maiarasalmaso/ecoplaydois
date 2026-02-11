@@ -157,6 +157,23 @@ export const generateEcoTip = async () => {
 
 // Deprecated/Stubbed functions for compatibility
 export const prefetchQuestions = () => { };
-export const recordQuestionOutcome = () => { };
+const AI_OUTCOME_KEY = 'ecoplay.ai.outcomes';
+
+export const recordQuestionOutcome = ({ questionId, age, correct }) => {
+  try {
+    const prev = readJson(AI_OUTCOME_KEY);
+    const next = Array.isArray(prev) ? prev.slice() : [];
+    next.push({
+      at: new Date().toISOString(),
+      questionId: String(questionId || ''),
+      age: Number(age || 0),
+      correct: Boolean(correct)
+    });
+    writeJson(AI_OUTCOME_KEY, next.slice(-2000));
+    return true;
+  } catch {
+    return false;
+  }
+};
 export const getGeminiMetrics = () => ({});
 

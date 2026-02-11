@@ -307,3 +307,57 @@ export const playRouletteWin = () => {
   setTimeout(() => playTone(1108, 'sine', 0.1, 0.1), 100); // C#6
   setTimeout(() => playTone(1318, 'sine', 0.2, 0.1), 200); // E6
 };
+
+let lastKeystrokeTime = 0;
+export const playKeystroke = () => {
+  const now = performance.now();
+  if (now - lastKeystrokeTime < 40) return; // throttle to avoid overlap
+  lastKeystrokeTime = now;
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume().catch(() => { });
+
+  try {
+    const bufferSize = Math.floor(ctx.sampleRate * 0.025); // 25ms burst
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    // Slight randomisation to sound natural
+    filter.frequency.value = 1800 + Math.random() * 600;
+    filter.Q.value = 1.2;
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.06, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.02);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start();
+  } catch (e) {
+    void e;
+  }
+};
+
+export const playLevelUp = () => {
+  // Ascending arpeggio: C5 → E5 → G5 → C6 with a shimmery tail
+  const notes = [
+    { f: 523.25, t: 0, d: 0.15 },
+    { f: 659.25, t: 0.12, d: 0.15 },
+    { f: 783.99, t: 0.24, d: 0.15 },
+    { f: 1046.50, t: 0.36, d: 0.3 },
+    { f: 1318.51, t: 0.50, d: 0.4 },
+  ];
+  notes.forEach(({ f, t, d }) => {
+    setTimeout(() => playTone(f, 'sine', d, 0.12), t * 1000);
+  });
+};

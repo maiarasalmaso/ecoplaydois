@@ -20,8 +20,52 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         const result = await query('SELECT * FROM progress WHERE local_user_id = $1', [userId]);
 
         if (result.rows.length === 0) {
-            console.log(`[API] No progress found for user ${userId}`);
-            return res.json(null);
+            console.log(`[API] No progress found for user ${userId}. Creating initial zeroed record...`);
+
+            // Create initial zeroed progress for new user
+            const initialProgress = {
+                score: 0,
+                badges: [],
+                badge_unlocks: {},
+                stats: {
+                    xp: 0,
+                    logins: 1,
+                    streak: 0,
+                    timeSpentSeconds: 0,
+                    saved_energy: 0,
+                    saved_credits: 0,
+                    saved_modules: {}
+                },
+                completed_levels: {},
+                last_daily_xp_date: null,
+                unclaimed_rewards: [],
+                energy: 0,
+                eco_credits: 0
+            };
+
+            const insertResult = await query(`
+                INSERT INTO progress (
+                    local_user_id, score, badges, badge_unlocks, stats, 
+                    completed_levels, last_daily_xp_date, unclaimed_rewards, 
+                    energy, eco_credits, version, updated_at
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 1, NOW())
+                RETURNING *
+            `, [
+                userId,
+                initialProgress.score,
+                JSON.stringify(initialProgress.badges),
+                JSON.stringify(initialProgress.badge_unlocks),
+                JSON.stringify(initialProgress.stats),
+                JSON.stringify(initialProgress.completed_levels),
+                initialProgress.last_daily_xp_date,
+                JSON.stringify(initialProgress.unclaimed_rewards),
+                initialProgress.energy,
+                initialProgress.eco_credits
+            ]);
+
+            console.log(`[API] Initial progress created for user ${userId}`);
+            return res.json(insertResult.rows[0]);
         }
 
         const row = result.rows[0];

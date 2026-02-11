@@ -51,7 +51,8 @@ const EcoQuiz = () => {
         }
       } catch (error) {
         console.error('Erro ao gerar quiz com IA:', error);
-        alert('N\u00E3o foi poss\u00EDvel gerar o quiz com IA. Tentando carregar perguntas padr\u00E3o...');
+        const msg = error.response?.data?.error || 'Não foi possível gerar o quiz com IA.';
+        alert(`${msg} Tentando carregar perguntas padrão...`);
         const qs = loadManualQuestions(age);
         setQuestions(qs);
         resetQuiz();
@@ -114,7 +115,7 @@ const EcoQuiz = () => {
       // Let's assume I will add the import next.
       recordQuestionOutcome({ questionId: currentQ.id, age: selectedAge, correct });
     } else {
-      recordManualQuestionOutcome(selectedAge, currentQuestionIndex, correct);
+      recordManualQuestionOutcome({ questionId: currentQ.id, age: selectedAge, correct });
     }
   };
 

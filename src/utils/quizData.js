@@ -349,7 +349,7 @@ export const loadManualQuestions = (age) => {
   }
 
   return [];
-  return [];
+
 };
 
 const OUTCOME_KEY = 'ecoplay.manual.outcomes';

@@ -59,10 +59,29 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    // Clear authentication
     localStorage.removeItem('ecoplay_token');
     setToken(null);
     setUser(null);
     delete api.defaults.headers.common['Authorization'];
+
+    // 🔒 CRITICAL: Clear ALL game state to prevent data leakage
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (
+        key.startsWith('ecoplay_progress_') ||
+        key.startsWith('ecoplay_modules_') ||
+        key.startsWith('ecoplay_energy_') ||
+        key.startsWith('ecoplay_credits_') ||
+        key.startsWith('ecoplay_last_time_')
+      )) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+
+    console.log('[Auth] Logout complete. All user data cleared.');
   };
 
   const updateProfile = async (data) => {

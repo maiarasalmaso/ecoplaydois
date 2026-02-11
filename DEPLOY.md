@@ -1,76 +1,68 @@
-# Guia de Deploy 100% Gratuito do EcoPlay 🚀
+# Guia de Deploy 100% na Vercel (Frontend e Backend) 🚀
 
-Este guia explica como colocar seu projeto EcoPlay no ar usando serviços gratuitos de alta qualidade.
-Esta arquitetura é profissional e separada em três partes:
+Este guia explica como colocar seu projeto EcoPlay no ar **usando apenas a Vercel** para tudo (Site e API), sem precisar do Render.
 
-1.  **Frontend (O Site)**: Hospedado na **Vercel**.
-2.  **Backend (A API e Servidor)**: Hospedado no **Render**.
-3.  **Banco de Dados**: Hospedado no **Supabase** (Postgres).
+A arquitetura será:
+1.  **Frontend + Backend**: Ambos na **Vercel** (Site React na raiz, API em Funções Serverless).
+2.  **Banco de Dados**: Hospedado no **Supabase** ou **Neon** (Postgres).
 
 ---
 
-## Passo 1: Banco de Dados (Supabase)
+## Passo 1: Banco de Dados (Postgres)
 
-Como seu projeto usa PostgreSQL (`pg`), o **Supabase** é a melhor opção gratuita.
+Você precisa de uma URL de conexão Postgres (`postgres://...`). Recomendamos **Supabase** ou **Neon**.
 
-1.  Acesse [database.new](https://database.new/) (Crie uma conta se não tiver).
-2.  Crie um novo projeto. Anote a **senha** do banco de dados.
-3.  Após criar, vá em **Project Settings** -> **Database** -> **Connection String** -> **URI**.
-4.  Copie a string que começa com `postgresql://...` e substitua `[YOUR-PASSWORD]` pela senha que você criou.
+### Opção A: Supabase (Recomendado)
+1.  Acesse [database.new](https://database.new/).
+2.  Crie um projeto e anote a **senha**.
+3.  Vá em **Project Settings** -> **Database** -> **Connection String**.
+4.  Copie a string que começa com `postgresql://...` e substitua `[YOUR-PASSWORD]` pela sua senha.
     *   *Esta será sua `DATABASE_URL`.*
-5.  Vá no **SQL Editor** do Supabase (ícone ⚡ na esquerda).
-6.  Copie o conteúdo do arquivo `server/database_init.sql` (e `server/seeds.sql` se quiser dados iniciais) e cole no editor. Clique em **RUN** para criar as tabelas.
+5.  No **SQL Editor**, rode o script de criação das tabelas (`server/database_init.sql` se houver).
 
 ---
 
-## Passo 2: Backend (Render)
-
-O Render vai hospedar sua API Node.js/Express.
-
-1.  Crie uma conta no [Render](https://render.com/).
-2.  Clique em **New +** -> **Web Service**.
-3.  Conecte seu repositório GitHub (onde está o código do projeto).
-4.  Configure:
-    *   **Root Directory**: `server` (Importante! O servidor está nesta pasta).
-    *   **Environment**: Node.
-    *   **Build Command**: `npm install && npm run build`
-    *   **Start Command**: `npm start`
-    *   **Instance Type**: Free.
-5.  Em **Environment Variables** (Advanced), adicione:
-    *   Key: `DATABASE_URL`
-    *   Value: (Cole a string do Supabase do Passo 1)
-    *   Key: `JWT_SECRET`
-    *   Value: (Crie uma senha longa e segura qualquer, ex: `super-secreta-eco-play-2026`)
-    *   Key: `NODE_ENV`
-    *   Value: `production`
-6.  Clique em **Create Web Service**.
-7.  Aguarde o deploy. Quando finalizar, copie a URL gerada (ex: `https://ecoplay-api.onrender.com`).
-
-*Nota: O plano gratuito do Render hiberna após 15min inativo. A primeira requisição pode demorar uns 50 segundos para "acordar".*
-
----
-
-## Passo 3: Frontend (Vercel)
-
-A Vercel vai hospedar o site React.
+## Passo 2: Configurar o Projeto na Vercel
 
 1.  Crie uma conta na [Vercel](https://vercel.com/).
 2.  Clique em **Add New...** -> **Project**.
-3.  Importe o mesmo repositório do GitHub.
-4.  Configure:
+3.  Importe seu repositório do GitHub.
+4.  **Configurações de Build**:
     *   **Framework Preset**: Vite (deve detectar automático).
-    *   **Root Directory**: `.` (Deixe o padrão, raiz).
-5.  Em **Environment Variables**, adicione:
-    *   Key: `VITE_API_URL`
-    *   Value: (Cole a URL do seu Backend no Render, ex: `https://ecoplay-api.onrender.com`)
-        *   *Importante: Não coloque a barra `/` no final.*
-6.  Clique em **Deploy**.
+    *   **Root Directory**: `.` (Raiz).
+    *   **Build Command**: `npm run build` (Padrão).
 
 ---
 
-## Passo 4: Testar
+## Passo 3: Variáveis de Ambiente (MUITO IMPORTANTE)
 
-1.  Acesse a URL que a Vercel gerou (ex: `https://ecoplay.vercel.app`).
-2.  Tente fazer login ou cadastro.
-    *   *Se demorar na primeira vez, é o Render acordando.*
-3.  Pronto! Seu jogo está online e 100% gratuito.
+Antes de clicar em "Deploy", vá na seção **Environment Variables** e adicione:
+
+| Nome (Key) | Valor (Value) | Descrição |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | `postgresql://...` | A URL do seu banco Supabase/Neon (Passo 1). |
+| `JWT_SECRET` | `sua-senha-secreta-aqui` | Uma senha longa qualquer para segurança dos logins. |
+| `GEMINI_API_KEY` | `AIza...` | Sua chave da API do Google (Para a IA do Quiz). |
+
+**NOTA:** NÃO adicione `VITE_API_URL`.
+*   Ao não definir essa variável, o site usará automaticamente o backend interno da Vercel (`/api`), o que é o correto.
+
+---
+
+## Passo 4: Deploy
+
+1.  Clique em **Deploy**.
+2.  Aguarde a finalização.
+3.  Acesse a URL gerada (ex: `https://ecoplay.vercel.app`).
+4.  Seu jogo (Frontend) e sua API (Backend na mesma URL) estarão funcionando juntos!
+
+---
+
+## Resolução de Problemas
+
+**Erro na IA (Quiz)?**
+*   Verifique se a variável `GEMINI_API_KEY` está correta na Vercel.
+
+**Erro de Login/Banco?**
+*   Verifique se a `DATABASE_URL` está correta.
+*   Se estiver usando Supabase, certifique-se de desmarcar "Use connection pooling" ou usar a porta 5432 (Session mode) se tiver problemas de conexão, embora o driver `@neondatabase/serverless` que usamos lide bem com isso.

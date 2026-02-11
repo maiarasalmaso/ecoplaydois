@@ -54,6 +54,7 @@ export const GameStateProvider = ({ children }) => {
   const prevModulesRef = useRef(modules);
   const lastRemoteSaveRef = useRef(0);
   const saveTimeoutRef = useRef(null);
+  const prevUserIdRef = useRef(null); // Track user changes
 
   const BASE_THRESHOLDS = [500, 1500, 2200, 3000, 3800, 5000];
 
@@ -271,6 +272,33 @@ export const GameStateProvider = ({ children }) => {
     badgeUnlocksRef.current = badgeUnlocks || {};
   }, [badgeUnlocks]);
 
+  // 🔒 CRITICAL: Detect user change and reset state
+  useEffect(() => {
+    const currentUserId = user?.id || null;
+    const previousUserId = prevUserIdRef.current;
+
+    // If user changed (login/logout/switch account)
+    if (previousUserId !== null && currentUserId !== previousUserId) {
+      console.log(`[GameState] User changed from ${previousUserId} to ${currentUserId}. Resetting state...`);
+
+      // Reset ALL state to prevent data leakage
+      setScore(0);
+      setEcoCredits(0);
+      setEnergy(0);
+      setModules({});
+      setBadges([]);
+      setBadgeUnlocks({});
+      setStats({});
+      setCompletedLevels({});
+      setLastDailyXpDate(null);
+      setDailyBonus(null);
+      setUnclaimedRewards([]);
+      setIsLoaded(false); // Trigger reload
+    }
+
+    prevUserIdRef.current = currentUserId;
+  }, [user?.id]);
+
   useEffect(() => {
     if (!isLoaded && user) {
       // Allow manual re-triggering of load by setting isLoaded to false
@@ -385,7 +413,7 @@ export const GameStateProvider = ({ children }) => {
             setSyncStatus('synced');
           } else {
             // No remote data - this is a NEW user
-            console.log('[Sync] 🆕 No server data found - new user');
+            console.log('[Sync] 🆕 No server data found - new user. Initializing with ZERO state...');
             const guestProgress = localStorage.getItem('ecoplay_progress_guest');
             if (guestProgress) {
               try {
@@ -397,12 +425,23 @@ export const GameStateProvider = ({ children }) => {
                 console.warn('[Sync] Failed to parse guest progress', e);
               }
             } else {
-              // Initialize with daily bonus for new user
+              // 🔒 CRITICAL: Initialize ALL state to ZERO for new user
+              console.log('[Sync] Initializing fresh user with zeroed state');
               const today = dateOnlyNowLondrina();
               const bonus = 50;
+
+              // Explicitly zero out ALL state
               setScore(bonus);
+              setEcoCredits(0);
+              setEnergy(0);
+              setModules({});
+              setBadges([]);
+              setBadgeUnlocks({});
+              setStats({ xp: bonus, logins: 1, streak: 1, timeSpentSeconds: 0 });
+              setCompletedLevels({});
               setLastDailyXpDate(today);
               setDailyBonus({ amount: bonus, streak: 1 });
+              setUnclaimedRewards([]);
             }
             setSyncStatus('synced');
           }

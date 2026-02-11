@@ -85,40 +85,46 @@ const fillGrid = (grid) => {
 const removeCells = (grid, difficulty = 'medium') => {
   const attempts = difficulty === 'easy' ? 30 : difficulty === 'medium' ? 45 : 55;
   const newGrid = grid.map(row => [...row]);
-  
+
   let count = attempts;
   while (count > 0) {
     let row = Math.floor(Math.random() * 9);
     let col = Math.floor(Math.random() * 9);
-    
+
     if (newGrid[row][col] !== BLANK) {
       newGrid[row][col] = BLANK;
       count--;
     }
   }
-  
+
   return newGrid;
 };
 
 export const generateSudoku = (difficulty = 'medium') => {
-  // Cria grid vazio 9x9
-  let grid = Array.from({ length: 9 }, () => Array(9).fill(BLANK));
-  
-  // Preenche a diagonal principal (3 blocos 3x3) para otimizar
-  // Blocos independentes podem ser preenchidos aleatoriamente sem conflito inicial
-  for (let i = 0; i < 9; i = i + 3) {
-    fillBox(grid, i, i);
+  let grid;
+  let solvedGrid;
+  let isValid = false;
+
+  // Tenta gerar um tabuleiro válido até conseguir
+  while (!isValid) {
+    // Cria grid vazio 9x9
+    grid = Array.from({ length: 9 }, () => Array(9).fill(BLANK));
+
+    // Preenche a diagonal principal (3 blocos 3x3) para otimizar
+    for (let i = 0; i < 9; i = i + 3) {
+      fillBox(grid, i, i);
+    }
+
+    // Tenta preencher o resto. Se falhar, tenta novamente do zero.
+    if (fillGrid(grid)) {
+      isValid = true;
+      solvedGrid = grid.map(row => [...row]);
+    }
   }
 
-  // Preenche o resto
-  fillGrid(grid);
-  
-  // Guarda a solução
-  const solvedGrid = grid.map(row => [...row]);
-  
   // Cria o puzzle removendo peças
   const initialGrid = removeCells(grid, difficulty);
-  
+
   return {
     initial: initialGrid,
     solved: solvedGrid
@@ -141,7 +147,7 @@ export const getHint = (currentBoard, solvedBoard) => {
 
   // Escolhe uma célula vazia aleatória
   const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-  
+
   // Retorna a posição e o valor correto
   return {
     row: randomCell.row,
