@@ -143,19 +143,19 @@ const Login = () => {
                     Email
                   </label>
                   <div className="relative group">
-                    <KeyRound className="absolute left-3 top-3.5 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5" />
+                    <KeyRound className="absolute left-3 top-4 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5 pointer-events-none" />
                     <input
                       id="email-address"
                       name="ecoplay_unique_login_email_v2"
                       type="email"
-                      autoComplete="new-password"
-                      readOnly={!email} // Only readOnly if empty to prevent autofill, but allow typing if user started
-                      onFocus={(e) => e.target.removeAttribute('readonly')}
+                      inputMode="email"
+                      autoComplete="email"
                       required
-                      className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-3 bg-theme-input-bg border border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium"
-                      placeholder="Seu email"
+                      className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-4 text-base bg-theme-input-bg border-2 border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium touch-manipulation"
+                      placeholder="seuemail@exemplo.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
                 </div>
@@ -165,19 +165,18 @@ const Login = () => {
                     Senha
                   </label>
                   <div className="relative group">
-                    <Lock className="absolute left-3 top-3.5 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5" />
+                    <Lock className="absolute left-3 top-4 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5 pointer-events-none" />
                     <input
                       id="password"
                       name="ecoplay_unique_login_password_v2"
                       type="password"
-                      autoComplete="new-password"
-                      readOnly={!password}
-                      onFocus={(e) => e.target.removeAttribute('readonly')}
+                      autoComplete="current-password"
                       required
-                      className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-3 bg-theme-input-bg border border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium"
+                      className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-4 text-base bg-theme-input-bg border-2 border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium touch-manipulation"
                       placeholder="Sua senha"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
                 </div>
@@ -186,20 +185,19 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-slate-900 bg-[color:var(--login-accent)] hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[color:var(--login-accent)] transition-all shadow-lg hover:shadow-[0_0_20px_var(--login-accent-glow)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-base font-bold rounded-xl text-slate-900 bg-[color:var(--login-accent)] hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[color:var(--login-accent)] transition-all shadow-lg hover:shadow-[0_0_20px_var(--login-accent-glow)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
               >
                 {submitting ? 'ENTRANDO...' : 'ENTRAR'}
               </button>
             </form>
 
-            {/* Register Link */}
             <div className="text-center border-t border-theme-border pt-6 mt-6">
               <p className="text-xs text-theme-text-tertiary mb-3">
                 Primeira vez por aqui?
               </p>
               <Link
                 to="/register"
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-[11px] uppercase tracking-widest text-orange-600 dark:text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 hover:border-orange-500/40 transition-all duration-300"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-[11px] uppercase tracking-widest text-orange-600 dark:text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 hover:border-orange-500/40 transition-all duration-300 touch-manipulation"
               >
                 Criar Conta Completa <ArrowRight className="w-4 h-4" />
               </Link>

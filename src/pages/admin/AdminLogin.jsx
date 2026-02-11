@@ -108,20 +108,6 @@ const registerFailure = () => {
   return state;
 };
 
-const createSession = (remember) => {
-  const now = nowMs();
-  const ttlMs = remember ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000;
-  const session = { createdAt: now, expiresAt: now + ttlMs };
-  const storage = remember ? localStorage : sessionStorage;
-  try {
-    storage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
-  } catch {
-    // ignore
-  }
-};
-
-const isLocked = (state, now) => state.lockedUntil && now < state.lockedUntil;
-
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { login: authLogin } = useAuth();
@@ -245,7 +231,7 @@ const AdminLogin = () => {
 
   return (
     <div
-      className="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-y-auto supports-[min-height:100dvh]:min-h-[100dvh]"
       style={{
         '--admin-accent': accent.color,
         '--admin-accent-2': accent.colorAlt,
@@ -255,8 +241,6 @@ const AdminLogin = () => {
         '--admin-contrast': contrast,
       }}
     >
-
-
       <MotionDiv
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -305,60 +289,62 @@ const AdminLogin = () => {
 
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label htmlFor="admin-login" className="text-sm font-semibold text-theme-text-secondary">
+              <label htmlFor="admin-login" className="text-sm font-semibold text-theme-text-secondary pl-1">
                 Email
               </label>
               <div className="relative group">
-                <KeyRound className="absolute left-3 top-3.5 text-theme-text-tertiary group-focus-within:text-[color:var(--admin-accent)] transition-colors w-5 h-5" />
+                <KeyRound className="absolute left-3.5 top-4 text-theme-text-tertiary group-focus-within:text-[color:var(--admin-accent)] transition-colors w-5 h-5 pointer-events-none" />
                 <input
                   id="admin-login"
                   name="ecoplay_admin_unique_login"
                   type="email"
                   inputMode="email"
-                  autoComplete="new-password"
-                  readOnly={!login}
-                  onFocus={(e) => e.target.removeAttribute('readonly')}
-                  className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-3 bg-theme-input-bg border border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)] focus:border-[color:var(--admin-accent)] transition-all font-medium"
+                  autoComplete="email"
+                  required
+                  className="appearance-none rounded-xl relative block w-full pl-11 px-4 py-4 text-base bg-theme-input-bg border-2 border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)] focus:border-[color:var(--admin-accent)] transition-all font-medium touch-manipulation"
+                  placeholder="Seu email de admin"
                   value={login}
                   onChange={(e) => setLogin(e.target.value)}
+                  style={{ fontSize: '16px' }}
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="admin-password" className="text-sm font-semibold text-theme-text-secondary">
+              <label htmlFor="admin-password" className="text-sm font-semibold text-theme-text-secondary pl-1">
                 Senha
               </label>
               <div className="relative group">
-                <Lock className="absolute left-3 top-3.5 text-theme-text-tertiary group-focus-within:text-[color:var(--admin-accent)] transition-colors w-5 h-5" />
+                <Lock className="absolute left-3.5 top-4 text-theme-text-tertiary group-focus-within:text-[color:var(--admin-accent)] transition-colors w-5 h-5 pointer-events-none" />
                 <input
                   id="admin-password"
                   name="ecoplay_admin_unique_password"
                   type="password"
-                  autoComplete="new-password"
-                  readOnly={!password}
-                  onFocus={(e) => e.target.removeAttribute('readonly')}
-                  className="appearance-none rounded-xl relative block w-full pl-10 px-4 py-3 bg-theme-input-bg border border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)] focus:border-[color:var(--admin-accent)] transition-all font-medium"
+                  autoComplete="current-password"
+                  required
+                  className="appearance-none rounded-xl relative block w-full pl-11 px-4 py-4 text-base bg-theme-input-bg border-2 border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)] focus:border-[color:var(--admin-accent)] transition-all font-medium touch-manipulation"
+                  placeholder="Sua senha de admin"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  style={{ fontSize: '16px' }}
                 />
               </div>
             </div>
           </div>
 
           <div className="flex items-center justify-between gap-4">
-            <label className="inline-flex items-center gap-2 text-sm text-theme-text-secondary select-none">
+            <label className="inline-flex items-center gap-2 text-sm text-theme-text-secondary select-none cursor-pointer">
               <input
                 type="checkbox"
-                className="h-4 w-4 rounded border-theme-border bg-theme-input-bg text-[color:var(--admin-accent)] focus:ring-[color:var(--admin-accent)] focus:ring-2"
+                className="h-5 w-5 rounded border-theme-border bg-theme-input-bg text-[color:var(--admin-accent)] focus:ring-[color:var(--admin-accent)] focus:ring-2 transition-all"
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
               />
-              Lembrar credenciais
+              Lembrar
             </label>
             <a
               href="mailto:ecoplayutfpr@gmail.com?subject=Recupera%C3%A7%C3%A3o%20de%20senha%20(admin)%20-%20EcoPlay"
-              className="text-sm font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--admin-accent)] rounded"
+              className="text-sm font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--admin-accent)] rounded p-1"
             >
               Esqueci a senha
             </a>
@@ -367,10 +353,10 @@ const AdminLogin = () => {
           <button
             type="submit"
             disabled={submitting || locked}
-            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-[color:var(--admin-contrast)] bg-[color:var(--admin-accent)] hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[color:var(--admin-accent)] transition-all shadow-lg hover:shadow-[0_0_20px_var(--admin-accent-glow)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:translate-y-0"
+            className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-base font-bold rounded-xl text-[color:var(--admin-contrast)] bg-[color:var(--admin-accent)] hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[color:var(--admin-accent)] transition-all shadow-lg hover:shadow-[0_0_20px_var(--admin-accent-glow)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
           >
             <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-              <LogIn className="h-5 w-5 text-[color:var(--admin-contrast)] group-hover:brightness-110 transition-colors" />
+              <LogIn className="h-5 w-5 text-[color:var(--admin-contrast)] group-hover:scale-110 transition-transform" />
             </span>
             {submitting ? 'ENTRANDO...' : 'ENTRAR'}
           </button>
@@ -381,7 +367,7 @@ const AdminLogin = () => {
             <Link
               to="/privacy"
               aria-label="Abrir política de privacidade"
-              className="font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--admin-accent)] rounded"
+              className="font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--admin-accent)] rounded p-2"
             >
               Segurança e Privacidade
             </Link>
