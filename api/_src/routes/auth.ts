@@ -100,59 +100,48 @@ router.post('/login', async (req: Request, res: Response) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // ========== STREAK LOGIC ==========
-        // Get the user's progress to check last_daily_xp_date
-        const progressResult = await query('SELECT last_daily_xp_date FROM progress WHERE local_user_id = $1', [user.id]);
-        const lastDailyXpDate = progressResult.rows[0]?.last_daily_xp_date;
-
-        // Calculate today and yesterday in Londrina timezone (Brazil)
+        // ========== STREAK LOGIC (UTC) ==========
         const now = new Date();
-        const londrinaOffset = -3 * 60; // UTC-3
-        const localNow = new Date(now.getTime() + (londrinaOffset + now.getTimezoneOffset()) * 60000);
-        const today = localNow.toISOString().split('T')[0]; // YYYY-MM-DD
+        const todayStr = now.toISOString().split('T')[0]; // UTC YYYY-MM-DD
 
-        const yesterday = new Date(localNow);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        // Use users.last_login as the source of truth
+        const lastLoginDate = user.last_login ? new Date(user.last_login) : null;
+        const lastLoginStr = lastLoginDate ? lastLoginDate.toISOString().split('T')[0] : null;
 
         let newStreak = user.streak || 0;
 
-        if (lastDailyXpDate === today) {
-            // Same day login - ensure streak is at least 1
-            if (newStreak === 0) {
-                newStreak = 1;
-                console.log(`[Auth] User ${user.id} streak initialized to 1 (first count today)`);
-            } else {
-                console.log(`[Auth] User ${user.id} logged in again today. Streak remains: ${newStreak}`);
-            }
-        } else if (lastDailyXpDate === yesterdayStr) {
-            // Consecutive day - increment streak
-            newStreak = (user.streak || 0) + 1;
-            console.log(`[Auth] User ${user.id} logged in consecutively! Streak: ${user.streak} -> ${newStreak}`);
+        if (lastLoginStr === todayStr) {
+            // Same day login: Maintain streak, unlikely to be 0 if logged in before, but ensure min 1
+            if (newStreak === 0) newStreak = 1;
+            console.log(`[Auth] User ${user.id} login today. Streak maintained: ${newStreak}`);
         } else {
-            // Gap or first login ever - reset to 1
-            newStreak = 1;
-            console.log(`[Auth] User ${user.id} streak reset to 1 (was: ${user.streak}, last: ${lastDailyXpDate})`);
+            // Check if yesterday
+            const yesterday = new Date(now);
+            yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+            if (lastLoginStr === yesterdayStr) {
+                // Consecutive day
+                newStreak++;
+                console.log(`[Auth] User ${user.id} consecutive login! Streak: ${user.streak} -> ${newStreak}`);
+            } else {
+                // Missed a day or first login
+                newStreak = 1;
+                console.log(`[Auth] User ${user.id} streak reset (Last: ${lastLoginStr}, Today: ${todayStr}). New: ${newStreak}`);
+            }
         }
 
-        // Update streak in database
-        if (newStreak !== user.streak) {
-            try {
+        // Always update last_login. Update streak if changed.
+        try {
+            if (newStreak !== user.streak) {
                 await query('UPDATE users SET streak = $1, last_login = NOW() WHERE id = $2', [newStreak, user.id]);
-            } catch (error) {
-                // Fallback if last_login column doesn't exist yet
-                console.warn('[Auth] last_login column may not exist, updating only streak');
-                await query('UPDATE users SET streak = $1 WHERE id = $2', [newStreak, user.id]);
-            }
-            user.streak = newStreak;
-        } else {
-            // Update last_login even if streak didn't change
-            try {
+                user.streak = newStreak;
+            } else {
                 await query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
-            } catch (error) {
-                // Silently fail if last_login column doesn't exist yet
-                console.warn('[Auth] last_login column does not exist yet, skipping update');
             }
+        } catch (error) {
+            console.error('[Auth] Error updating streak/login stats:', error);
+            // Non-blocking error, but good to know
         }
         // ========== END STREAK LOGIC ==========
 

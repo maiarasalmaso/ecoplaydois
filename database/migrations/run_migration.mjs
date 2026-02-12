@@ -20,33 +20,34 @@ async function runMigration() {
 
     try {
         // Ler o arquivo SQL
-        const migrationPath = join(process.cwd(), 'database', 'migrations', '004_add_level_column.sql');
+        const migrationPath = join(process.cwd(), 'database', 'migrations', '003_add_last_login_tracking.sql');
         const sql = readFileSync(migrationPath, 'utf-8');
 
-        console.log('📋 Executando migration: 004_add_level_column.sql');
+        console.log('📋 Executando migration: 003_add_last_login_tracking.sql');
 
         // Executar a migration
         await pool.query(sql);
 
         console.log('✅ Migration executada com sucesso!');
 
-        // Verificar as colunas da tabela progress
+        // Verificar as colunas da tabela users
         const result = await pool.query(`
       SELECT column_name, data_type, column_default 
       FROM information_schema.columns 
-      WHERE table_name = 'progress'
+      WHERE table_name = 'users'
+      AND column_name IN ('last_login', 'streak')
       ORDER BY ordinal_position;
     `);
 
-        console.log('\n📊 Estrutura atual da tabela progress:');
+        console.log('\n📊 Estrutura atual da tabela users (parcial):');
         console.table(result.rows);
 
-        // Verificar se há registros sem version
+        // Verificar stats de usuários
         const countResult = await pool.query(`
       SELECT COUNT(*) as total, 
-             COUNT(version) as com_version,
-             COUNT(*) - COUNT(version) as sem_version
-      FROM progress;
+             COUNT(last_login) as com_last_login,
+             MAX(streak) as maior_streak
+      FROM users;
     `);
 
         console.log('\n📈 Status dos registros:');
