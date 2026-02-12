@@ -23,15 +23,15 @@ const ADMIN_ACCENT = {
   },
 };
 
-// Gerador de partículas fixas para o fundo (evita re-renderização)
+// Gerador de partículas fixas para o fundo
 const PARTICLES = Array.from({ length: 30 }).map((_, i) => ({
   id: i,
   top: `${Math.random() * 100}%`,
   left: `${Math.random() * 100}%`,
-  size: Math.random() * 4 + 2, // Tamanho variado entre 2px e 6px
-  duration: Math.random() * 3 + 2, // Animação entre 2s e 5s
+  size: Math.random() * 4 + 2,
+  duration: Math.random() * 3 + 2,
   delay: Math.random() * 2,
-  opacity: Math.random() * 0.5 + 0.3, // Opacidade variada
+  opacity: Math.random() * 0.5 + 0.3,
 }));
 
 const AdminLogin = () => {
@@ -89,7 +89,7 @@ const AdminLogin = () => {
         '--login-accent-border': accent.border,
         '--login-accent-glow': accent.glow,
         '--login-contrast': contrast,
-        backgroundColor: isLight ? '#ffffff' : undefined, // Branco puro no light
+        backgroundColor: isLight ? '#ffffff' : undefined,
       }}
     >
       {/* 🌟 POEIRA ESTELAR DOURADA (EXCLUSIVO MODO CLARO) */}
@@ -165,7 +165,6 @@ const AdminLogin = () => {
                   inputMode="email"
                   required
                   className="appearance-none rounded-xl relative block w-full pl-11 px-4 py-4 text-base bg-theme-input-bg border-2 border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium touch-manipulation"
-                  placeholder="admin@ecoplay.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   style={{ fontSize: '16px' }}
@@ -183,7 +182,6 @@ const AdminLogin = () => {
                   type="password"
                   required
                   className="appearance-none rounded-xl relative block w-full pl-11 px-4 py-4 text-base bg-theme-input-bg border-2 border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium touch-manipulation"
-                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={{ fontSize: '16px' }}
