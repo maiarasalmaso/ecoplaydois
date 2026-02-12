@@ -1,124 +1,48 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { KeyRound, Lock, LogIn, ShieldCheck } from 'lucide-react';
+import { KeyRound, Lock, ShieldCheck, ArrowLeft } from 'lucide-react';
 
 import { useTheme } from '@/context/ThemeContext';
-import { useAuth } from '@/context/AuthContext';
 
-const ADMIN_REMEMBER_KEY = 'ecoplay.admin.remember';
-const ADMIN_RATE_KEY = 'ecoplay.admin.rate';
-
-// Cores originais vibrantes
 const ADMIN_ACCENT = {
   dark: {
     color: '#fb923c', // Orange-400
     colorAlt: '#f97316', // Orange-500
     surface: 'rgba(251,146,60,0.15)',
     border: 'rgba(251,146,60,0.5)',
-    glow: 'rgba(251,146,60,0.3)',
-    text: '#ffffff'
+    glow: 'rgba(251,146,60,0.32)',
   },
   light: {
     color: '#f97316', // Orange-500
     colorAlt: '#ea580c', // Orange-600
     surface: 'rgba(249,115,22,0.1)',
-    border: 'rgba(249,115,22,0.3)',
+    border: 'rgba(249,115,22,0.4)',
     glow: 'rgba(249,115,22,0.25)',
-    text: '#ffffff'
   },
 };
 
-const normalize = (value) => String(value || '').trim();
-const nowMs = () => Date.now();
-const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-
-const readJson = (key) => {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-};
-
-const writeJson = (key, value) => {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch { }
-};
-
-const getRateState = () => {
-  const state = readJson(ADMIN_RATE_KEY) || {};
-  return {
-    failedCount: Number(state.failedCount) || 0,
-    lockedUntil: Number(state.lockedUntil) || 0,
-  };
-};
-
 const AdminLogin = () => {
-  const navigate = useNavigate();
-  const { login: authLogin } = useAuth();
-  const { theme } = useTheme();
-
-  const [login, setLogin] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [lockedUntil, setLockedUntil] = useState(() => getRateState().lockedUntil || 0);
+  const [submitting, setSubmitting] = useState(false);
+
+  const { login: authLogin } = useAuth();
+  const navigate = useNavigate();
+  const { theme } = useTheme();
 
   const isLight = theme === 'light';
   const accent = isLight ? ADMIN_ACCENT.light : ADMIN_ACCENT.dark;
-
-  // Cores de fundo consistentes com o app
-  const bgStyle = isLight
-    ? 'bg-amber-50' // Fundo quente claro
-    : 'bg-[#0b1323]'; // Azul noturno profundo
-
-  const cardBg = isLight ? 'rgba(255, 255, 255, 0.9)' : 'rgba(15, 23, 42, 0.8)';
-  const cardBorder = isLight ? 'rgba(253, 186, 116, 0.3)' : 'rgba(30, 41, 59, 0.5)';
-  const cardShadow = `0 20px 60px -15px ${isLight ? 'rgba(245, 158, 11, 0.15)' : 'rgba(0,0,0,0.5)'}`;
-
-  const lockSeconds = useMemo(() => {
-    if (!lockedUntil) return 0;
-    const diff = lockedUntil - nowMs();
-    return diff > 0 ? Math.ceil(diff / 1000) : 0;
-  }, [lockedUntil]);
-
-  useEffect(() => {
-    const state = getRateState();
-    if (state.lockedUntil > nowMs()) {
-      setLockedUntil(state.lockedUntil);
-      const timer = setInterval(() => {
-        const remaining = state.lockedUntil - nowMs();
-        if (remaining <= 0) {
-          setLockedUntil(0);
-          clearInterval(timer);
-        }
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, []);
+  const contrast = isLight ? '#f8fafc' : '#0b1323';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitting || lockSeconds > 0) return;
-
     setError('');
-    const l = normalize(login);
-    const p = normalize(password);
-
-    if (!l || !p) {
-      setError('Preencha login e senha.');
-      return;
-    }
-
-    if (!isEmail(l)) {
-      setError('Informe um email válido.');
-      return;
-    }
-
     setSubmitting(true);
-
     try {
-      await authLogin(l, p);
+      await authLogin(email, password);
 
       const token = localStorage.getItem('ecoplay_token');
       if (token) {
@@ -129,195 +53,124 @@ const AdminLogin = () => {
         navigate('/admin/painel', { replace: true });
       }
     } catch (err) {
-      console.error('[AdminLogin] Error:', err);
-      const msg = err.response?.data?.error || err.message || 'Falha no login.';
-      setError(msg);
-
-      const state = getRateState();
-      const newFailed = state.failedCount + 1;
-      if (newFailed >= 5) {
-        const lockTime = nowMs() + 30000;
-        setLockedUntil(lockTime);
-        writeJson(ADMIN_RATE_KEY, { failedCount: 0, lockedUntil: lockTime });
-      } else {
-        writeJson(ADMIN_RATE_KEY, { failedCount: newFailed, lockedUntil: 0 });
+      console.error(err);
+      let errorMsg = 'Falha no login';
+      if (err.response?.data?.error) {
+        errorMsg = err.response.data.error;
+      } else if (err.message) {
+        errorMsg = err.message;
       }
+      setError(errorMsg);
     } finally {
       setSubmitting(false);
     }
   };
 
+  const MotionDiv = motion.div;
+
   return (
     <div
-      className={`min-h-screen flex items-center justify-center py-12 px-4 relative overflow-y-auto transition-colors duration-500 ${bgStyle}`}
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-y-auto bg-theme-bg-primary"
       style={{
-        '--admin-accent': accent.color,
-        '--admin-accent-alt': accent.colorAlt,
-        '--admin-accent-glow': accent.glow,
-        '--admin-surface': accent.surface,
-        '--admin-border': accent.border,
+        '--login-accent': accent.color,
+        '--login-accent-2': accent.colorAlt,
+        '--login-accent-surface': accent.surface,
+        '--login-accent-border': accent.border,
+        '--login-accent-glow': accent.glow,
+        '--login-contrast': contrast,
       }}
     >
-      {/* Background Stars & Dots - Consistente com o App */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {isLight ? (
-          // Estrelas Amarelas Sutis (Modo Claro)
-          <>
-            <div className="absolute top-[15%] left-[10%] w-3 h-3 text-yellow-400 opacity-60 animate-pulse">✦</div>
-            <div className="absolute top-[45%] right-[15%] w-4 h-4 text-yellow-500 opacity-40 animate-pulse delay-700">★</div>
-            <div className="absolute bottom-[20%] left-[20%] w-2 h-2 text-amber-400 opacity-50 animate-bounce delay-1000">●</div>
-            <div className="absolute top-[10%] right-[30%] w-2 h-2 text-yellow-300 opacity-60">✦</div>
-            <div className="absolute bottom-[10%] right-[10%] w-3 h-3 text-amber-500 opacity-40 animate-pulse delay-500">★</div>
-          </>
-        ) : (
-          // Estrelas e Pontos Sutis (Modo Escuro)
-          <>
-            <div className="absolute top-[20%] left-[20%] w-1 h-1 bg-white/20 rounded-full animate-pulse"></div>
-            <div className="absolute top-[60%] right-[20%] w-1.5 h-1.5 bg-white/10 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-[30%] left-[10%] w-1 h-1 bg-orange-400/20 rounded-full"></div>
-            <div className="absolute top-[10%] right-[40%] text-orange-400/20 text-xs">✦</div>
-          </>
-        )}
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
+      <MotionDiv
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full p-8 sm:p-10 rounded-[40px] relative z-10 backdrop-blur-xl border"
-        style={{
-          backgroundColor: cardBg,
-          borderColor: cardBorder,
-          boxShadow: cardShadow
-        }}
+        transition={{ duration: 0.5 }}
+        className="max-w-md w-full space-y-8 bg-theme-card-bg/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-theme-border relative z-10"
       >
-        {/* Header Icon */}
-        <div className="flex justify-center mb-8">
+        {/* Header */}
+        <div className="text-center">
           <div
-            className="w-20 h-20 rounded-[28px] flex items-center justify-center transform hover:rotate-3 transition-transform duration-300 bg-gradient-to-br from-orange-500 to-amber-600 shadow-lg shadow-orange-500/30"
-          >
-            <ShieldCheck className="w-10 h-10 text-white" />
-          </div>
-        </div>
-
-        {/* Title */}
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-display font-black tracking-tight mb-2 uppercase transition-colors" style={{ color: isLight ? '#451a03' : '#f8fafc' }}>
-            ADMIN
-          </h1>
-          <p className="font-medium tracking-tight transition-colors" style={{ color: isLight ? '#78350f' : '#94a3b8' }}>
-            Acesso restrito à administração.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-2xl text-sm font-bold text-center animate-shake">
-              {error}
-            </div>
-          )}
-
-          {/* Email field */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold ml-1 transition-colors" style={{ color: isLight ? '#78350f' : '#cbd5e1' }}>Email</label>
-            <div className="relative group">
-              <KeyRound className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors pointer-events-none z-10" style={{ color: isLight ? '#b45309' : '#64748b' }} />
-              <input
-                type="email"
-                inputMode="email"
-                required
-                className="w-full h-14 pl-14 pr-5 rounded-2xl border-2 text-base focus:outline-none transition-all duration-300 font-medium bg-transparent"
-                style={{
-                  borderColor: isLight ? '#fed7aa' : '#334155',
-                  color: isLight ? '#451a03' : '#f1f5f9',
-                  backgroundColor: isLight ? '#fff7ed' : '#1e293b'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = accent.color;
-                  e.target.style.backgroundColor = isLight ? '#ffffff' : '#0f172a';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = isLight ? '#fed7aa' : '#334155';
-                  e.target.style.backgroundColor = isLight ? '#fff7ed' : '#1e293b';
-                }}
-                placeholder="admin@gmail.com"
-                value={login}
-                onChange={(e) => setLogin(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Password field */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold ml-1 transition-colors" style={{ color: isLight ? '#78350f' : '#cbd5e1' }}>Senha</label>
-            <div className="relative group">
-              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors pointer-events-none z-10" style={{ color: isLight ? '#b45309' : '#64748b' }} />
-              <input
-                type="password"
-                required
-                className="w-full h-14 pl-14 pr-5 rounded-2xl border-2 text-base focus:outline-none transition-all duration-300 font-medium bg-transparent"
-                style={{
-                  borderColor: isLight ? '#fed7aa' : '#334155',
-                  color: isLight ? '#451a03' : '#f1f5f9',
-                  backgroundColor: isLight ? '#fff7ed' : '#1e293b'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = accent.color;
-                  e.target.style.backgroundColor = isLight ? '#ffffff' : '#0f172a';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = isLight ? '#fed7aa' : '#334155';
-                  e.target.style.backgroundColor = isLight ? '#fff7ed' : '#1e293b';
-                }}
-                placeholder="••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Helper links */}
-          <div className="flex items-center justify-between px-1">
-            <label className="flex items-center gap-3 cursor-pointer group select-none">
-              <input
-                type="checkbox"
-                className="w-5 h-5 rounded-lg border-2 bg-transparent"
-                style={{ borderColor: isLight ? '#fdba74' : '#475569', accentColor: accent.color }}
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-              />
-              <span className="text-sm font-bold transition-colors" style={{ color: isLight ? '#9a3412' : '#94a3b8' }}>Lembrar</span>
-            </label>
-            <a href="#" className="text-sm font-bold transition-colors hover:opacity-80" style={{ color: isLight ? '#ea580c' : '#cbd5e1' }}>Esqueci a senha</a>
-          </div>
-
-          {/* Action Button */}
-          <button
-            type="submit"
-            disabled={submitting || lockSeconds > 0}
-            className="w-full h-16 text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 shadow-lg"
+            className="mx-auto h-16 w-16 rounded-2xl flex items-center justify-center shadow-lg transform rotate-2 mb-6"
             style={{
-              background: `linear-gradient(to right, ${accent.color}, ${accent.colorAlt})`,
-              boxShadow: `0 10px 25px -5px ${accent.glow}`
+              backgroundImage: 'linear-gradient(135deg, var(--login-accent), var(--login-accent-2))',
+              boxShadow: '0 18px 35px var(--login-accent-glow)',
             }}
           >
-            {submitting ? (
-              <span className="flex items-center gap-2">ENTRANDO...</span>
-            ) : (
-              <>
-                <LogIn className="w-6 h-6" />
-                <span>ENTRAR</span>
-              </>
-            )}
+            <ShieldCheck className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-display font-bold text-theme-text-primary tracking-wide">ADMIN</h1>
+          <p className="mt-2 text-sm text-theme-text-tertiary font-mono uppercase tracking-tighter">Acesso Restrito</p>
+        </div>
+
+        {/* Login Form */}
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit} autoComplete="off">
+          {error && (
+            <MotionDiv
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg text-sm text-center font-medium flex items-center justify-center gap-2"
+            >
+              <Lock className="w-4 h-4" />
+              <span>{error}</span>
+            </MotionDiv>
+          )}
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-theme-text-secondary pl-1">
+                Email
+              </label>
+              <div className="relative group">
+                <KeyRound className="absolute left-3.5 top-4 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5 pointer-events-none" />
+                <input
+                  type="email"
+                  inputMode="email"
+                  required
+                  className="appearance-none rounded-xl relative block w-full pl-11 px-4 py-4 text-base bg-theme-input-bg border-2 border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium touch-manipulation"
+                  placeholder="admin@ecoplay.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{ fontSize: '16px' }}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-theme-text-secondary pl-1">
+                Senha
+              </label>
+              <div className="relative group">
+                <Lock className="absolute left-3.5 top-4 text-theme-text-tertiary group-focus-within:text-[color:var(--login-accent)] transition-colors w-5 h-5 pointer-events-none" />
+                <input
+                  type="password"
+                  required
+                  className="appearance-none rounded-xl relative block w-full pl-11 px-4 py-4 text-base bg-theme-input-bg border-2 border-theme-input-border placeholder-theme-text-tertiary text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--login-accent)] focus:border-[color:var(--login-accent)] transition-all font-medium touch-manipulation"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={{ fontSize: '16px' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-base font-bold rounded-xl text-slate-900 bg-[color:var(--login-accent)] hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[color:var(--login-accent)] transition-all shadow-lg hover:shadow-[0_0_20px_var(--login-accent-glow)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+          >
+            {submitting ? 'VALIDANDO...' : 'ACESSAR PAINEL'}
           </button>
         </form>
 
-        {/* Footer */}
-        <div className="mt-12 pt-8 border-t text-center" style={{ borderColor: isLight ? '#fed7aa' : '#1e293b' }}>
-          <Link to="/privacy" className="text-sm font-bold transition-colors hover:opacity-80" style={{ color: isLight ? '#9a3412' : '#94a3b8' }}>
-            Segurança e Privacidade
+        <div className="text-center pt-6 border-t border-theme-border mt-6">
+          <Link
+            to="/login"
+            className="inline-flex items-center gap-2 text-sm font-bold text-theme-text-tertiary hover:text-[color:var(--login-accent)] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Voltar para Login de Usuário
           </Link>
         </div>
-      </motion.div>
+      </MotionDiv>
     </div>
   );
 };
