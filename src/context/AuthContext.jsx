@@ -74,7 +74,8 @@ export const AuthProvider = ({ children }) => {
         key.startsWith('ecoplay_modules_') ||
         key.startsWith('ecoplay_energy_') ||
         key.startsWith('ecoplay_credits_') ||
-        key.startsWith('ecoplay_last_time_')
+        key.startsWith('ecoplay_last_time_') ||
+        key === 'ecoplay.feedback.submitted'
       )) {
         keysToRemove.push(key);
       }
