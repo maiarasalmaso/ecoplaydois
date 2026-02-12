@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -22,6 +22,17 @@ const ADMIN_ACCENT = {
     glow: 'rgba(249,115,22,0.25)',
   },
 };
+
+// Gerador de partículas fixas para o fundo (evita re-renderização)
+const PARTICLES = Array.from({ length: 30 }).map((_, i) => ({
+  id: i,
+  top: `${Math.random() * 100}%`,
+  left: `${Math.random() * 100}%`,
+  size: Math.random() * 4 + 2, // Tamanho variado entre 2px e 6px
+  duration: Math.random() * 3 + 2, // Animação entre 2s e 5s
+  delay: Math.random() * 2,
+  opacity: Math.random() * 0.5 + 0.3, // Opacidade variada
+}));
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -70,7 +81,7 @@ const AdminLogin = () => {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-y-auto bg-theme-bg-primary"
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-theme-bg-primary transition-colors duration-500"
       style={{
         '--login-accent': accent.color,
         '--login-accent-2': accent.colorAlt,
@@ -78,13 +89,41 @@ const AdminLogin = () => {
         '--login-accent-border': accent.border,
         '--login-accent-glow': accent.glow,
         '--login-contrast': contrast,
+        backgroundColor: isLight ? '#ffffff' : undefined, // Branco puro no light
       }}
     >
+      {/* 🌟 POEIRA ESTELAR DOURADA (EXCLUSIVO MODO CLARO) */}
+      {isLight && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {PARTICLES.map((p) => (
+            <motion.div
+              key={p.id}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: p.opacity, scale: 1 }}
+              transition={{
+                duration: p.duration,
+                repeat: Infinity,
+                repeatType: "reverse",
+                delay: p.delay
+              }}
+              className="absolute rounded-full bg-yellow-400 drop-shadow-sm"
+              style={{
+                top: p.top,
+                left: p.left,
+                width: `${p.size}px`,
+                height: `${p.size}px`,
+                boxShadow: `0 0 ${p.size * 2}px rgba(250, 204, 21, 0.6)`
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       <MotionDiv
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="max-w-md w-full space-y-8 bg-theme-card-bg/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-theme-border relative z-10"
+        className="max-w-md w-full space-y-8 bg-theme-card-bg/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-theme-border relative z-10"
       >
         {/* Header */}
         <div className="text-center">
