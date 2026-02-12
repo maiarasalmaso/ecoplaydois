@@ -460,7 +460,8 @@ const providers = {
         id: u.id,
         name: u.full_name || 'Usuário',
         xp: u.score,
-        avatar: u.avatar
+        avatar: u.avatar,
+        level: u.level || 0 // Default to 0 if missing
       }));
     }
   }

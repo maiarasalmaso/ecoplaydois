@@ -350,11 +350,21 @@ const Dashboard = () => {
 
   useEffect(() => {
     let mounted = true;
-    getLeaderboard().then(data => {
-      if (mounted) setTopPlayers(data);
-    }).catch(err => console.error("Failed to fetch leaderboard", err));
-    return () => { mounted = false; };
-  }, [score]); // Refresh when score updates
+
+    const fetchLb = () => {
+      getLeaderboard().then(data => {
+        if (mounted) setTopPlayers(data);
+      }).catch(err => console.error("Failed to fetch leaderboard", err));
+    };
+
+    fetchLb(); // Immediate fetch on mount/score change
+    const interval = setInterval(fetchLb, 10000); // Poll every 10 seconds
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [score]); // Re-setup polling if local score changes (also triggers immediate fetch)
 
 
   const MotionDiv = motion.div;
@@ -570,11 +580,16 @@ const Dashboard = () => {
                           <div className={`text-theme-text-primary font-bold truncate ${isFirst ? 'bg-gradient-to-r from-[color:var(--card-accent)] to-theme-text-primary bg-clip-text text-transparent' : ''}`}>
                             {p.name}
                           </div>
-                          {isMe ? (
-                            <span className="text-[10px] font-mono uppercase border border-[color:var(--card-accent-border)] bg-[color:var(--card-accent-surface)] text-[color:var(--card-accent)] px-2 py-0.5 rounded-full">
-                              Você
-                            </span>
-                          ) : null}
+                          <div className="flex items-center gap-2">
+                            <div className="text-[10px] font-mono text-theme-text-tertiary bg-theme-bg-primary/50 px-1.5 py-0.5 rounded border border-theme-border">
+                              Lvl {p.level || 0}
+                            </div>
+                            {isMe ? (
+                              <span className="text-[10px] font-mono uppercase border border-[color:var(--card-accent-border)] bg-[color:var(--card-accent-surface)] text-[color:var(--card-accent)] px-2 py-0.5 rounded-full">
+                                Você
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
                         <div className="text-xs text-theme-text-tertiary font-mono group-hover:text-[color:var(--card-accent)] transition-colors">
                           {Intl.NumberFormat('pt-BR').format(Number(p.xp || 0))} XP
