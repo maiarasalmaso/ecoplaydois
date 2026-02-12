@@ -4,6 +4,7 @@ import { withTransaction } from '../transaction.js';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 
 import { calculateProduction } from '../utils/gameRules.js';
+import { getLevel, LEVELS } from '../utils/gamification.js';
 
 const router = Router();
 
@@ -159,16 +160,22 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         }
 
         // 2. Upsert Logic
-        // We use INSERT ... ON CONFLICT just in case, but since we locked above, 
-        // the only race is if row didn't exist and two inserts happened.
-        // Uniquely, the SQL Trigger `trg_progress_version` will auto-increment version on UPDATE.
+        // Calculate Level Server-Side
+        const finalScore = score || 0;
+        const currentLevelInfo = getLevel(finalScore);
+        const levelIndex = LEVELS.indexOf(currentLevelInfo); // 0-based index or actual level number depending on logic. 
+        // Frontend 'LEVELS' doesn't have an ID, just index. 
+        // Let's use the index as the level number (0 = Iniciante, 1 = Aprendiz...)
+        // OR better, let's just use the index for now as "level".
+        const currentLevel = LEVELS.indexOf(currentLevelInfo);
+
         const queryText = `
             INSERT INTO progress (
                 local_user_id, score, badges, badge_unlocks, stats, 
                 completed_levels, last_daily_xp_date, unclaimed_rewards, updated_at,
-                energy, eco_credits, version
+                energy, eco_credits, version, level
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, 1)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, 1, $11)
             ON CONFLICT (local_user_id) DO UPDATE SET
                 score = EXCLUDED.score,
                 badges = EXCLUDED.badges,
@@ -179,7 +186,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
                 unclaimed_rewards = EXCLUDED.unclaimed_rewards,
                 updated_at = NOW(),
                 energy = EXCLUDED.energy,
-                eco_credits = EXCLUDED.eco_credits
+                eco_credits = EXCLUDED.eco_credits,
+                level = EXCLUDED.level
                 -- version is auto-incremented by trigger
             RETURNING *
         `;
@@ -194,7 +202,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
             last_daily_xp_date || null,
             unclaimed_rewards || [],
             energy,
-            ecoCredits
+            ecoCredits,
+            currentLevel
         ];
 
         const result = await client.query(queryText, values);
@@ -202,8 +211,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         // 3. Sync User Score and Time Spent (User Table) - Atomic with this transaction
         const timeSpent = Number(stats?.timeSpentSeconds) || 0;
         await client.query(
-            'UPDATE users SET score = $1, time_spent = $2 WHERE id = $3',
-            [score || 0, timeSpent, userId]
+            'UPDATE users SET score = $1, time_spent = $2, level = $3 WHERE id = $4',
+            [score || 0, timeSpent, currentLevel, userId]
         );
 
         console.log(`[API] Progress saved successfully for user ${userId} (New Version: ${result.rows[0].version}, Time: ${timeSpent}s)`);

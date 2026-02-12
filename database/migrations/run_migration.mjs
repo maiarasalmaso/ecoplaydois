@@ -3,12 +3,13 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ path: '.env.local' });
+dotenv.config(); // Also load .env as fallback
 
-const DATABASE_URL = process.env.DATABASE_URL;
+const DATABASE_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_DATABASE_URL;
 
 if (!DATABASE_URL) {
-    console.error('❌ DATABASE_URL não encontrada nas variáveis de ambiente');
+    console.error('❌ DATABASE_URL (ou POSTGRES_URL) não encontrada nas variáveis de ambiente');
     process.exit(1);
 }
 
@@ -19,10 +20,10 @@ async function runMigration() {
 
     try {
         // Ler o arquivo SQL
-        const migrationPath = join(process.cwd(), 'database', 'migrations', '002_add_version_column.sql');
+        const migrationPath = join(process.cwd(), 'database', 'migrations', '004_add_level_column.sql');
         const sql = readFileSync(migrationPath, 'utf-8');
 
-        console.log('📋 Executando migration: 002_add_version_column.sql');
+        console.log('📋 Executando migration: 004_add_level_column.sql');
 
         // Executar a migration
         await pool.query(sql);

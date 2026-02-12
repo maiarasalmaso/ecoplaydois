@@ -42,7 +42,7 @@ router.post('/', async (req: Request, res: Response) => {
 router.get('/leaderboard', async (req: Request, res: Response) => {
     try {
         const result = await query(
-            `SELECT id, full_name, score, avatar 
+            `SELECT id, full_name, score, avatar, level 
              FROM users 
              ORDER BY score DESC 
              LIMIT 10`

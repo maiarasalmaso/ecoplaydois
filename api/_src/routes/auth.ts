@@ -17,7 +17,7 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
 
     try {
         const userId = req.user.userId;
-        const result = await query('SELECT id, email, full_name, role, streak, score, avatar FROM users WHERE id = $1', [userId]);
+        const result = await query('SELECT id, email, full_name, role, streak, score, avatar, level FROM users WHERE id = $1', [userId]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
@@ -60,7 +60,7 @@ router.patch('/me', authenticateToken, async (req: AuthRequest, res: Response) =
             UPDATE users 
             SET ${updates.join(', ')} 
             WHERE id = $${paramCount}
-            RETURNING id, email, full_name, role, streak, score, avatar
+            RETURNING id, email, full_name, role, streak, score, avatar, level
         `;
 
         const result = await query(queryText, values);
@@ -86,7 +86,7 @@ router.post('/login', async (req: Request, res: Response) => {
         }
 
         // Find User
-        const result = await query('SELECT id, email, password_hash, full_name, role, streak, score, avatar FROM users WHERE email = $1', [email]);
+        const result = await query('SELECT id, email, password_hash, full_name, role, streak, score, avatar, level FROM users WHERE email = $1', [email]);
 
         if (result.rows.length === 0) {
             return res.status(401).json({ error: 'Invalid credentials' });
@@ -177,7 +177,8 @@ router.post('/login', async (req: Request, res: Response) => {
                 role: user.role,
                 streak: user.streak,
                 score: user.score,
-                avatar: user.avatar
+                avatar: user.avatar,
+                level: user.level
             }
         });
 
@@ -203,7 +204,7 @@ router.post('/sync', async (req: Request, res: Response) => {
 
         // Tenta encontrar por full_name ou email
         let result = await query(
-            'SELECT id, email, full_name, role, streak, score, avatar FROM users WHERE LOWER(full_name) = LOWER($1) OR LOWER(email) = LOWER($1)',
+            'SELECT id, email, full_name, role, streak, score, avatar, level FROM users WHERE LOWER(full_name) = LOWER($1) OR LOWER(email) = LOWER($1)',
             [normalized]
         );
 
@@ -216,7 +217,7 @@ router.post('/sync', async (req: Request, res: Response) => {
             const insertResult = await query(
                 `INSERT INTO users (email, password_hash, full_name, role)
                  VALUES ($1, $2, $3, 'CUSTOMER')
-                 RETURNING id, email, full_name, role, streak, score, avatar`,
+                 RETURNING id, email, full_name, role, streak, score, avatar, level`,
                 [dummyEmail, dummyPass, normalized]
             );
             user = insertResult.rows[0];
@@ -243,7 +244,8 @@ router.post('/sync', async (req: Request, res: Response) => {
                 role: user.role,
                 streak: user.streak,
                 score: user.score,
-                avatar: user.avatar
+                avatar: user.avatar,
+                level: user.level
             }
         });
 
