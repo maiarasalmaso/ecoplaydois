@@ -57,89 +57,98 @@ const CharacterSelector = ({ isOpen, onClose }) => {
             <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                 <div
                     onClick={onClose}
-                    className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                    className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
                 />
 
                 <div
-                    className="relative bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] z-10 mt-16"
+                    className="relative bg-theme-bg-secondary/95 backdrop-blur-xl w-full max-w-3xl rounded-3xl border border-theme-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh] z-10 mt-16 animate-in fade-in zoom-in-95 duration-200"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
-                    <div className="p-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 shrink-0">
-                        <div className="flex justify-between items-start mb-1">
-                            <h2 className="text-xl font-display font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                <span className="text-2xl">🛡️</span> Escolha seu Guardião
+                    <div className="p-6 border-b border-theme-border bg-theme-bg-tertiary/30 shrink-0 flex justify-between items-center">
+                        <div>
+                            <h2 className="text-2xl font-display font-bold text-theme-text-primary flex items-center gap-3">
+                                <span className="text-3xl filter drop-shadow-md">🛡️</span>
+                                <span>Escolha seu Guardião</span>
                             </h2>
-                            <button
-                                onClick={onClose}
-                                className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors"
-                            >
-                                <X className="w-5 h-5 text-slate-500 dark:text-white" />
-                            </button>
+                            <p className="text-theme-text-tertiary text-sm mt-1 font-medium">
+                                Selecione um avatar para sua identidade na base.
+                            </p>
                         </div>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm">
-                            Selecione um avatar e confirme para salvar.
-                        </p>
+                        <button
+                            onClick={onClose}
+                            className="p-2 hover:bg-theme-bg-tertiary rounded-full transition-colors group"
+                        >
+                            <X className="w-6 h-6 text-theme-text-tertiary group-hover:text-red-400 transition-colors" />
+                        </button>
                     </div>
 
                     {/* Grid */}
-                    <div className="flex-1 p-6 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 justify-items-center bg-slate-100 dark:bg-slate-900/50">
+                    <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-theme-bg-primary/50">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 justify-items-center">
 
-                        {/* Random Option */}
-                        <button
-                            onClick={handleRandom}
-                            disabled={isRolling}
-                            className={`aspect-square w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-green-400 dark:hover:border-green-400 flex flex-col items-center justify-center gap-1 group transition-colors bg-white dark:bg-slate-800/50 ${isRolling ? 'opacity-50 cursor-wait' : ''}`}
-                        >
-                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-green-500/20 transition-colors">
-                                <Dices className="w-5 h-5 text-slate-400 dark:text-slate-400 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors" />
-                            </div>
-                            <span className="font-bold text-xs text-slate-500 dark:text-slate-400 group-hover:text-green-600 dark:group-hover:text-green-400">Aleatório</span>
-                        </button>
-
-                        {AVATAR_SEEDS.map((seed) => (
-                            <div key={seed} onClick={() => handleSelect(seed)} className="cursor-pointer">
-                                <div
-                                    className={`aspect-square w-20 h-20 rounded-xl border-2 p-1.5 transition-all duration-300 relative overflow-hidden group flex items-center justify-center
-                    ${selectedSeed === seed
-                                            ? 'border-green-500 bg-green-500/10 shadow-[0_0_15px_rgba(74,222,128,0.4)] scale-105'
-                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-green-400 hover:shadow-lg'
-                                        }`}
-                                >
-                                    <img
-                                        src={`https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`}
-                                        alt={seed}
-                                        className="w-16 h-16 object-contain filter drop-shadow-md group-hover:scale-110 transition-transform duration-300"
-                                    />
-                                    {selectedSeed === seed && (
-                                        <div className="absolute top-1 right-1 bg-green-500 text-white p-0.5 rounded-full shadow-lg z-10">
-                                            <Check className="w-3 h-3" />
-                                        </div>
-                                    )}
-                                    <div className="absolute bottom-0.5 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <span className="text-[9px] font-mono font-bold bg-white/90 dark:bg-black/60 text-slate-800 dark:text-white border border-slate-200 dark:border-transparent px-2 py-0.5 rounded-full backdrop-blur-md shadow-sm">
-                                            {seed}
-                                        </span>
-                                    </div>
+                            {/* Random Option */}
+                            <button
+                                onClick={handleRandom}
+                                disabled={isRolling}
+                                className={`aspect-square w-24 h-24 rounded-2xl border-2 border-dashed border-theme-border hover:border-green-500/50 flex flex-col items-center justify-center gap-2 group transition-all duration-300 bg-theme-bg-tertiary/30 ${isRolling ? 'opacity-50 cursor-wait' : 'hover:bg-theme-bg-tertiary hover:-translate-y-1'}`}
+                            >
+                                <div className="w-10 h-10 rounded-full bg-theme-bg-secondary flex items-center justify-center group-hover:bg-green-500/20 transition-colors shadow-sm">
+                                    <Dices className="w-5 h-5 text-theme-text-secondary group-hover:text-green-400 transition-colors" />
                                 </div>
-                            </div>
-                        ))}
+                                <span className="font-bold text-xs uppercase tracking-wide text-theme-text-tertiary group-hover:text-green-400 transition-colors">Aleatório</span>
+                            </button>
+
+                            {AVATAR_SEEDS.map((seed) => {
+                                const isSelected = selectedSeed === seed;
+                                return (
+                                    <div key={seed} onClick={() => handleSelect(seed)} className="cursor-pointer relative group">
+                                        <div
+                                            className={`aspect-square w-24 h-24 rounded-2xl border-2 p-1.5 transition-all duration-300 relative overflow-hidden flex items-center justify-center bg-theme-bg-secondary
+                                            ${isSelected
+                                                    ? 'border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.3)] scale-105 z-10'
+                                                    : 'border-theme-border opacity-80 hover:opacity-100 hover:border-theme-border/80 hover:scale-105 hover:shadow-lg'
+                                                }`}
+                                        >
+                                            <div className="w-full h-full rounded-xl overflow-hidden bg-theme-bg-tertiary relative">
+                                                <img
+                                                    src={`https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`}
+                                                    alt={seed}
+                                                    className={`w-full h-full object-cover transition-transform duration-500 ${isSelected ? 'scale-110' : 'group-hover:scale-110'}`}
+                                                />
+                                            </div>
+
+                                            {isSelected && (
+                                                <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full shadow-lg z-20 animate-in zoom-in spin-in-90 duration-300">
+                                                    <Check className="w-3 h-3 stroke-[3]" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className={`absolute -bottom-2 left-1/2 -translate-x-1/2 transition-all duration-300 z-20 ${isSelected ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0'}`}>
+                                            <span className="text-[10px] font-mono font-bold bg-theme-bg-secondary/90 border border-theme-border text-theme-text-primary px-3 py-1 rounded-full shadow-xl backdrop-blur-md whitespace-nowrap">
+                                                {seed}
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
 
                     {/* Footer with Buttons */}
-                    <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex justify-end gap-3 shrink-0">
+                    <div className="p-6 border-t border-theme-border bg-theme-bg-tertiary/30 flex justify-end gap-3 shrink-0">
                         <button
                             onClick={onClose}
-                            className="px-5 py-2 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold rounded-xl text-sm transition-all"
+                            className="px-6 py-3 rounded-2xl border border-theme-border text-theme-text-secondary hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 font-bold text-sm transition-all"
                         >
-                            Fechar
+                            Cancelar
                         </button>
                         <button
                             onClick={handleConfirm}
-                            className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 text-sm transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                            className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold rounded-2xl shadow-lg shadow-green-500/20 text-sm transition-all hover:scale-105 active:scale-95 flex items-center gap-2 border border-green-400/20"
                         >
-                            <Check className="w-4 h-4" />
-                            Confirmar
+                            <Check className="w-4 h-4 stroke-[3]" />
+                            Confirmar Guardião
                         </button>
                     </div>
                 </div>
