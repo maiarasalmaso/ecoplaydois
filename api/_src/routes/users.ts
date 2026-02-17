@@ -44,6 +44,7 @@ router.get('/leaderboard', async (req: Request, res: Response) => {
         const result = await query(
             `SELECT id, full_name, score, avatar, level 
              FROM users 
+             WHERE role != 'ADMIN'
              ORDER BY score DESC 
              LIMIT 10`
         );
