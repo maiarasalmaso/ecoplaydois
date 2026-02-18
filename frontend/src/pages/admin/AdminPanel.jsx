@@ -7,23 +7,6 @@ import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import api from '../../services/api';
 
-const ADMIN_ACCENT = {
-  dark: {
-    color: '#fb923c',
-    colorAlt: '#f97316',
-    surface: 'rgba(251,146,60,0.2)',
-    border: 'rgba(251,146,60,0.6)',
-    glow: 'rgba(251,146,60,0.32)',
-  },
-  light: {
-    color: '#f97316',
-    colorAlt: '#ea580c',
-    surface: 'rgba(249,115,22,0.18)',
-    border: 'rgba(249,115,22,0.5)',
-    glow: 'rgba(249,115,22,0.28)',
-  },
-};
-
 const formatNumber = (value) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(Number.isFinite(value) ? value : 0);
 
 const AdminPanel = () => {
@@ -31,13 +14,7 @@ const AdminPanel = () => {
   const { theme } = useTheme();
   const { user, logout, loading: authLoading } = useAuth();
 
-  const isLight = theme === 'light';
-  const adminAccent = isLight ? ADMIN_ACCENT.light : ADMIN_ACCENT.dark;
-  const adminContrast = isLight ? '#f8fafc' : '#0b1323';
-
   const [tab, setTab] = useState('users');
-  // No feedbackSubTab needed anymore
-
   const [users, setUsers] = useState([]);
   const [feedback, setFeedback] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -158,29 +135,19 @@ const AdminPanel = () => {
   if (loading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-theme-bg-primary">
-        <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-theme-accent border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div
-      className="min-h-screen relative overflow-hidden pb-20"
-      style={{
-        '--admin-accent': adminAccent.color,
-        '--admin-accent-2': adminAccent.colorAlt,
-        '--admin-accent-surface': adminAccent.surface,
-        '--admin-accent-border': adminAccent.border,
-        '--admin-accent-glow': adminAccent.glow,
-        '--admin-contrast': adminContrast,
-      }}
-    >
+    <div className="min-h-screen relative overflow-hidden pb-20 bg-theme-bg-primary text-theme-text-primary transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between gap-4 mb-8">
           <Link
             to="/"
-            className="flex items-center gap-2 text-[color:var(--admin-accent)] hover:text-[color:var(--admin-accent-2)] transition-colors font-semibold"
+            className="flex items-center gap-2 text-theme-accent hover:text-theme-accent-2 transition-colors font-semibold"
           >
             <ArrowLeft className="w-5 h-5" />
             Voltar ao site
@@ -190,14 +157,14 @@ const AdminPanel = () => {
             <ThemeToggle />
             <button
               onClick={fetchData}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[color:var(--admin-accent-surface)] border border-[color:var(--admin-accent-border)] text-[color:var(--admin-accent)] hover:bg-[color:var(--admin-accent)]/20 transition-colors font-semibold"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-theme-accent-surface border border-theme-accent-border text-theme-accent hover:bg-theme-accent/20 transition-colors font-semibold shadow-[0_0_10px_rgba(var(--theme-accent-rgb),0.2)]"
             >
               <RefreshCw className="w-4 h-4" />
               Atualizar
             </button>
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-theme-bg-tertiary border border-theme-border text-theme-text-secondary hover:bg-theme-bg-secondary hover:text-theme-text-primary transition-colors"
             >
               <LogOut className="w-4 h-4" />
               Sair
@@ -212,7 +179,7 @@ const AdminPanel = () => {
         >
           {/* Dashboard Title */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-[color:var(--admin-accent-surface)] text-[color:var(--admin-accent)] flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-theme-accent-surface text-theme-accent flex items-center justify-center border border-theme-accent-border shadow-[0_0_15px_rgba(var(--theme-accent-rgb),0.3)]">
               <Shield className="w-6 h-6" />
             </div>
             <div>
@@ -225,27 +192,27 @@ const AdminPanel = () => {
           <div className="flex flex-wrap items-center gap-2 mb-6">
             <button
               onClick={() => setTab('users')}
-              className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all ${tab === 'users'
-                ? 'bg-[color:var(--admin-accent)] text-[color:var(--admin-contrast)] border-[color:var(--admin-accent-border)] shadow-[0_0_18px_var(--admin-accent-glow)]'
-                : 'bg-theme-bg-tertiary/80 text-theme-text-primary border-theme-border hover:bg-theme-bg-secondary'
+              className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all duration-300 ${tab === 'users'
+                ? 'bg-theme-accent text-theme-bg-primary border-theme-accent shadow-[0_0_18px_rgba(var(--theme-accent-rgb),0.4)]'
+                : 'bg-theme-bg-tertiary/80 text-theme-text-secondary border-theme-border hover:bg-theme-bg-secondary hover:text-theme-text-primary'
                 }`}
             >
               Usuários ({users.length})
             </button>
             <button
               onClick={() => setTab('feedback')}
-              className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all ${tab === 'feedback'
-                ? 'bg-[color:var(--admin-accent)] text-[color:var(--admin-contrast)] border-[color:var(--admin-accent-border)] shadow-[0_0_18px_var(--admin-accent-glow)]'
-                : 'bg-theme-bg-tertiary/80 text-theme-text-primary border-theme-border hover:bg-theme-bg-secondary'
+              className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all duration-300 ${tab === 'feedback'
+                ? 'bg-theme-accent text-theme-bg-primary border-theme-accent shadow-[0_0_18px_rgba(var(--theme-accent-rgb),0.4)]'
+                : 'bg-theme-bg-tertiary/80 text-theme-text-secondary border-theme-border hover:bg-theme-bg-secondary hover:text-theme-text-primary'
                 }`}
             >
               Comentários ({filteredRaw.length})
             </button>
             <button
               onClick={() => setTab('evolution')}
-              className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all ${tab === 'evolution'
-                ? 'bg-[color:var(--admin-accent)] text-[color:var(--admin-contrast)] border-[color:var(--admin-accent-border)] shadow-[0_0_18px_var(--admin-accent-glow)]'
-                : 'bg-theme-bg-tertiary/80 text-theme-text-primary border-theme-border hover:bg-theme-bg-secondary'
+              className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all duration-300 ${tab === 'evolution'
+                ? 'bg-theme-accent text-theme-bg-primary border-theme-accent shadow-[0_0_18px_rgba(var(--theme-accent-rgb),0.4)]'
+                : 'bg-theme-bg-tertiary/80 text-theme-text-secondary border-theme-border hover:bg-theme-bg-secondary hover:text-theme-text-primary'
                 }`}
             >
               Evolução
@@ -253,14 +220,14 @@ const AdminPanel = () => {
           </div>
 
           {/* Content */}
-          {error && <div className="p-4 bg-red-500/20 text-red-300 rounded-xl mb-4 border border-red-500/50">{error}</div>}
+          {error && <div className="p-4 bg-red-500/10 text-red-400 rounded-xl mb-4 border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)]">{error}</div>}
 
           {/* ──────────────── USERS TAB ──────────────── */}
           {tab === 'users' && (
-            <div className="overflow-x-auto rounded-2xl border border-theme-border bg-theme-bg-tertiary/20">
+            <div className="overflow-x-auto rounded-2xl border border-theme-border bg-theme-bg-tertiary/20 backdrop-blur-sm">
               <table className="w-full text-left">
-                <thead className="bg-theme-bg-tertiary/40">
-                  <tr className="text-xs text-theme-text-tertiary uppercase">
+                <thead className="bg-theme-bg-tertiary/40 border-b border-theme-border/50">
+                  <tr className="text-xs text-theme-text-tertiary uppercase tracking-wider font-semibold">
                     <th className="px-6 py-4">Nome</th>
                     <th className="px-6 py-4">Email</th>
                     <th className="px-6 py-4">Role</th>
@@ -276,20 +243,20 @@ const AdminPanel = () => {
                     </tr>
                   ) : (
                     users.map((u) => (
-                      <tr key={u.id} className="hover:bg-theme-bg-tertiary/30 transition-colors">
-                        <td className="px-6 py-4 font-bold text-theme-text-primary">{u.full_name}</td>
-                        <td className="px-6 py-4 text-theme-text-secondary">{u.email}</td>
+                      <tr key={u.id} className="hover:bg-theme-bg-tertiary/30 transition-colors duration-200">
+                        <td className="px-6 py-4 font-bold text-theme-text-primary text-sm">{u.full_name}</td>
+                        <td className="px-6 py-4 text-theme-text-secondary text-sm">{u.email}</td>
                         <td className="px-6 py-4">
                           <span
-                            className={`text-xs px-2 py-1 rounded font-bold ${u.role === 'ADMIN'
-                              ? 'bg-orange-500/20 text-orange-400'
-                              : 'bg-theme-bg-tertiary text-theme-text-tertiary'
+                            className={`text-xs px-2.5 py-1 rounded-md font-bold tracking-wide border ${u.role === 'ADMIN'
+                              ? 'bg-theme-warning/20 text-theme-warning border-theme-warning/30'
+                              : 'bg-theme-bg-tertiary text-theme-text-tertiary border-theme-border'
                               }`}
                           >
                             {u.role}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-theme-text-tertiary text-sm">
+                        <td className="px-6 py-4 text-theme-text-tertiary text-sm font-mono">
                           {new Date(u.created_at).toLocaleDateString()}
                         </td>
                       </tr>
@@ -304,35 +271,35 @@ const AdminPanel = () => {
           {tab === 'feedback' && (
             <div className="space-y-6">
               {/* Filter Bar */}
-              <div className="flex flex-col md:flex-row gap-4 p-4 rounded-2xl bg-theme-bg-tertiary/10 border border-theme-border items-center">
-                <div className="flex-1 w-full relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-text-tertiary" />
+              <div className="flex flex-col md:flex-row gap-4 p-4 rounded-2xl bg-theme-bg-tertiary/20 border border-theme-border items-center backdrop-blur-sm">
+                <div className="flex-1 w-full relative group">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-text-tertiary group-focus-within:text-theme-accent transition-colors" />
                   <input
                     type="text"
                     placeholder="Buscar por nome ou email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 rounded-xl bg-theme-bg-secondary border border-theme-border text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)] transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-theme-bg-primary border border-theme-border text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-theme-accent transition-all placeholder:text-theme-text-tertiary/50"
                   />
                 </div>
 
-                <div className="flex gap-2 w-full md:w-auto">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] uppercase font-bold text-theme-text-tertiary ml-1">De</label>
+                <div className="flex gap-3 w-full md:w-auto items-end">
+                  <div className="flex flex-col gap-1.5 flex-1 md:flex-none">
+                    <label className="text-[10px] uppercase font-bold text-theme-text-tertiary ml-1 tracking-wider">De</label>
                     <input
                       type="date"
                       value={dateStart}
                       onChange={(e) => setDateStart(e.target.value)}
-                      className="px-3 py-1.5 rounded-xl bg-theme-bg-secondary border border-theme-border text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)]"
+                      className="w-full md:w-auto px-3 py-2 rounded-xl bg-theme-bg-primary border border-theme-border text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-theme-accent transition-all cursor-pointer"
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] uppercase font-bold text-theme-text-tertiary ml-1">Até</label>
+                  <div className="flex flex-col gap-1.5 flex-1 md:flex-none">
+                    <label className="text-[10px] uppercase font-bold text-theme-text-tertiary ml-1 tracking-wider">Até</label>
                     <input
                       type="date"
                       value={dateEnd}
                       onChange={(e) => setDateEnd(e.target.value)}
-                      className="px-3 py-1.5 rounded-xl bg-theme-bg-secondary border border-theme-border text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)]"
+                      className="w-full md:w-auto px-3 py-2 rounded-xl bg-theme-bg-primary border border-theme-border text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-theme-accent transition-all cursor-pointer"
                     />
                   </div>
                 </div>
@@ -340,7 +307,7 @@ const AdminPanel = () => {
                 {(searchTerm || dateStart || dateEnd) && (
                   <button
                     onClick={() => { setSearchTerm(''); setDateStart(''); setDateEnd(''); }}
-                    className="px-4 py-2 h-auto text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-xl transition-colors whitespace-nowrap"
+                    className="px-4 py-2.5 h-auto text-xs font-bold text-theme-danger hover:bg-theme-danger/10 border border-transparent hover:border-theme-danger/20 rounded-xl transition-all whitespace-nowrap"
                   >
                     Limpar Filtros
                   </button>
@@ -357,8 +324,7 @@ const AdminPanel = () => {
                   </div>
                 ) : (
                   groupedList.map((group, idx) => {
-                    const isExpanded = expandedUsers[group.user_id || group.email] ?? true; // Default expanded? maybe better closed if many. Let's default to closed except first? No, let's default to expanded, usually better visibility.
-                    // Actually user requested "option to expand/collapse".
+                    const isExpanded = expandedUsers[group.user_id || group.email] ?? true;
 
                     return (
                       <motion.div
@@ -366,30 +332,30 @@ const AdminPanel = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.05 }}
                         key={group.user_id || group.email || idx}
-                        className="rounded-2xl border border-theme-border bg-theme-bg-secondary overflow-hidden"
+                        className="rounded-2xl border border-theme-border bg-theme-bg-secondary overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
                       >
                         {/* User Header Card */}
                         <div
-                          className="p-4 flex items-center justify-between cursor-pointer hover:bg-theme-bg-tertiary/50 transition-colors"
+                          className="p-4 flex items-center justify-between cursor-pointer hover:bg-theme-bg-tertiary/40 transition-colors duration-200"
                           onClick={() => toggleUserExpansion(group.user_id || group.email)}
                         >
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[color:var(--admin-accent-surface)] to-transparent border border-[color:var(--admin-accent-border)] flex items-center justify-center text-[color:var(--admin-accent)]">
-                              <User className="w-5 h-5" />
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-theme-accent-surface to-transparent border border-theme-accent-border flex items-center justify-center text-theme-accent shadow-inner">
+                              <User className="w-6 h-6" />
                             </div>
                             <div>
                               <h3 className="font-bold text-theme-text-primary text-lg flex items-center gap-2">
                                 {group.full_name}
-                                <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-theme-bg-tertiary text-theme-text-secondary border border-theme-border">
+                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-theme-bg-tertiary text-theme-text-tertiary border border-theme-border">
                                   {group.comments.length} {group.comments.length === 1 ? 'comentário' : 'comentários'}
                                 </span>
                               </h3>
-                              <div className="text-sm text-theme-text-tertiary flex items-center gap-1">
-                                <Mail className="w-3 h-3" /> {group.email}
+                              <div className="text-sm text-theme-text-tertiary flex items-center gap-1.5 mt-0.5 font-mono">
+                                <Mail className="w-3.5 h-3.5" /> {group.email}
                               </div>
                             </div>
                           </div>
-                          <div className="text-theme-text-tertiary">
+                          <div className="text-theme-text-tertiary p-2 rounded-full hover:bg-theme-bg-tertiary transition-colors">
                             {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                           </div>
                         </div>
@@ -403,41 +369,45 @@ const AdminPanel = () => {
                               exit={{ height: 0, opacity: 0 }}
                               className="border-t border-theme-border/50 bg-theme-bg-tertiary/5"
                             >
-                              <div className="p-4 space-y-4">
+                              <div className="p-5 space-y-6">
                                 {group.comments.map((comment, cIdx) => (
-                                  <div key={comment.id} className="relative pl-6 border-l-2 border-[color:var(--admin-accent-border)]">
-                                    <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-theme-bg-secondary border-2 border-[color:var(--admin-accent)]"></div>
+                                  <div key={comment.id} className="relative pl-6 border-l-2 border-theme-accent-border hover:border-theme-accent transition-colors duration-300 group/comment">
+                                    <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-theme-bg-secondary border-2 border-theme-accent group-hover/comment:scale-110 transition-transform shadow-[0_0_8px_rgba(var(--theme-accent-rgb),0.5)]"></div>
 
-                                    <div className="mb-2 flex items-center gap-2 text-xs text-theme-text-tertiary font-mono uppercase tracking-wider">
-                                      <Calendar className="w-3 h-3" />
-                                      {new Date(comment.created_at).toLocaleDateString()} às {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    <div className="mb-3 flex items-center gap-2 text-xs text-theme-text-tertiary font-mono uppercase tracking-wider">
+                                      <Calendar className="w-3.5 h-3.5 text-theme-accent" />
+                                      <span className="font-bold text-theme-text-secondary">
+                                        {new Date(comment.created_at).toLocaleDateString()}
+                                      </span>
+                                      <span className="opacity-50 mx-1">|</span>
+                                      {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                       {comment.ux?.ux_open_like && (
-                                        <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl">
-                                          <div className="text-xs font-bold text-emerald-500 uppercase mb-1 flex items-center gap-1">
-                                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Gostou
+                                        <div className="md:col-span-1 bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 p-4 rounded-xl hover:border-emerald-500/40 transition-colors shadow-sm">
+                                          <div className="text-xs font-bold text-emerald-500 uppercase mb-2 flex items-center gap-1.5 tracking-wide">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]"></span> Gostou
                                           </div>
-                                          <p className="text-sm text-theme-text-primary whitespace-pre-wrap leading-relaxed">"{comment.ux.ux_open_like}"</p>
+                                          <p className="text-sm text-theme-text-secondary whitespace-pre-wrap leading-relaxed italic">"{comment.ux.ux_open_like}"</p>
                                         </div>
                                       )}
 
                                       {comment.ux?.ux_open_improve && (
-                                        <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl">
-                                          <div className="text-xs font-bold text-amber-500 uppercase mb-1 flex items-center gap-1">
-                                            <span className="w-2 h-2 rounded-full bg-amber-500"></span> Melhorar
+                                        <div className="md:col-span-1 bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 p-4 rounded-xl hover:border-amber-500/40 transition-colors shadow-sm">
+                                          <div className="text-xs font-bold text-amber-500 uppercase mb-2 flex items-center gap-1.5 tracking-wide">
+                                            <span className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_5px_rgba(245,158,11,0.8)]"></span> Melhorar
                                           </div>
-                                          <p className="text-sm text-theme-text-primary whitespace-pre-wrap leading-relaxed">"{comment.ux.ux_open_improve}"</p>
+                                          <p className="text-sm text-theme-text-secondary whitespace-pre-wrap leading-relaxed italic">"{comment.ux.ux_open_improve}"</p>
                                         </div>
                                       )}
 
                                       {comment.ux?.ux_open_ideas && (
-                                        <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-xl">
-                                          <div className="text-xs font-bold text-blue-500 uppercase mb-1 flex items-center gap-1">
-                                            <span className="w-2 h-2 rounded-full bg-blue-500"></span> Ideia
+                                        <div className="md:col-span-1 bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 p-4 rounded-xl hover:border-blue-500/40 transition-colors shadow-sm">
+                                          <div className="text-xs font-bold text-blue-500 uppercase mb-2 flex items-center gap-1.5 tracking-wide">
+                                            <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.8)]"></span> Ideia
                                           </div>
-                                          <p className="text-sm text-theme-text-primary whitespace-pre-wrap leading-relaxed">"{comment.ux.ux_open_ideas}"</p>
+                                          <p className="text-sm text-theme-text-secondary whitespace-pre-wrap leading-relaxed italic">"{comment.ux.ux_open_ideas}"</p>
                                         </div>
                                       )}
                                     </div>
@@ -459,28 +429,28 @@ const AdminPanel = () => {
           {tab === 'evolution' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-theme-bg-secondary/50 p-6 rounded-2xl border border-theme-border relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Users className="w-24 h-24 text-[color:var(--admin-accent)]" />
+                <div className="bg-theme-bg-secondary/50 p-6 rounded-2xl border border-theme-border relative overflow-hidden group hover:bg-theme-bg-secondary transition-colors duration-300 shadow-sm hover:shadow-lg">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
+                    <Users className="w-24 h-24 text-theme-accent" />
                   </div>
                   <div className="relative z-10">
-                    <p className="text-sm font-medium text-theme-text-tertiary mb-1">Total de Usuários</p>
-                    <h3 className="text-4xl font-display font-bold text-theme-text-primary">{users.length}</h3>
+                    <p className="text-sm font-medium text-theme-text-tertiary mb-1 uppercase tracking-wider">Total de Usuários</p>
+                    <h3 className="text-4xl font-display font-bold text-theme-text-primary drop-shadow-sm">{users.length}</h3>
                   </div>
                 </div>
                 {/* Note: Removed Global Score and Time Spent if they rely on heavy calculations, but these are from 'users' list so it is fine to keep if users data is lightweight. Assuming users data has score/time_spent as before. */}
-                <div className="bg-theme-bg-secondary/50 p-6 rounded-2xl border border-theme-border relative overflow-hidden group">
+                <div className="bg-theme-bg-secondary/50 p-6 rounded-2xl border border-theme-border relative overflow-hidden group hover:bg-theme-bg-secondary transition-colors duration-300 shadow-sm hover:shadow-lg">
                   <div className="relative z-10">
-                    <p className="text-sm font-medium text-theme-text-tertiary mb-1">Pontuação Total Global</p>
-                    <h3 className="text-4xl font-display font-bold text-emerald-500">
+                    <p className="text-sm font-medium text-theme-text-tertiary mb-1 uppercase tracking-wider">Pontuação Total Global</p>
+                    <h3 className="text-4xl font-display font-bold text-emerald-500 drop-shadow-sm">
                       {formatNumber(users.reduce((acc, u) => acc + (Number(u.score) || 0), 0))}
                     </h3>
                   </div>
                 </div>
-                <div className="bg-theme-bg-secondary/50 p-6 rounded-2xl border border-theme-border relative overflow-hidden group">
+                <div className="bg-theme-bg-secondary/50 p-6 rounded-2xl border border-theme-border relative overflow-hidden group hover:bg-theme-bg-secondary transition-colors duration-300 shadow-sm hover:shadow-lg">
                   <div className="relative z-10">
-                    <p className="text-sm font-medium text-theme-text-tertiary mb-1">Tempo Total Jogado</p>
-                    <h3 className="text-4xl font-display font-bold text-blue-500">
+                    <p className="text-sm font-medium text-theme-text-tertiary mb-1 uppercase tracking-wider">Tempo Total Jogado</p>
+                    <h3 className="text-4xl font-display font-bold text-blue-500 drop-shadow-sm">
                       {Math.floor(users.reduce((acc, u) => acc + (Number(u.time_spent) || 0), 0) / 60)} <span className="text-lg text-theme-text-secondary font-normal">minutos</span>
                     </h3>
                   </div>
@@ -488,13 +458,16 @@ const AdminPanel = () => {
               </div>
 
               <div className="bg-theme-bg-secondary/30 rounded-2xl border border-theme-border overflow-hidden">
-                <div className="p-6 border-b border-theme-border/50">
-                  <h3 className="text-xl font-bold text-theme-text-primary">Evolução dos Usuários</h3>
-                  <p className="text-sm text-theme-text-tertiary">Detalhes de desempenho e engajamento individual.</p>
+                <div className="p-6 border-b border-theme-border/50 bg-theme-bg-tertiary/10">
+                  <h3 className="text-xl font-bold text-theme-text-primary flex items-center gap-2">
+                    <Users className="w-5 h-5 text-theme-text-tertiary" />
+                    Evolução dos Usuários
+                  </h3>
+                  <p className="text-sm text-theme-text-tertiary mt-1">Detalhes de desempenho e engajamento individual.</p>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
-                    <thead className="bg-theme-bg-tertiary/40 text-xs text-theme-text-tertiary uppercase font-medium">
+                    <thead className="bg-theme-bg-tertiary/40 text-xs text-theme-text-tertiary uppercase font-medium tracking-wider">
                       <tr>
                         <th className="px-6 py-4">Usuário</th>
                         <th className="px-6 py-4 text-right">Pontuação (XP)</th>
@@ -504,29 +477,29 @@ const AdminPanel = () => {
                     </thead>
                     <tbody className="divide-y divide-theme-border/50">
                       {users.sort((a, b) => (b.score || 0) - (a.score || 0)).map((user, idx) => (
-                        <tr key={user.id} className="hover:bg-theme-bg-tertiary/30 transition-colors">
+                        <tr key={user.id} className="hover:bg-theme-bg-tertiary/30 transition-colors duration-200">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-theme-bg-tertiary flex items-center justify-center text-sm font-bold text-theme-text-secondary border border-theme-border">
+                              <div className="w-9 h-9 rounded-full bg-theme-bg-tertiary flex items-center justify-center text-sm font-bold text-theme-text-secondary border border-theme-border shadow-sm">
                                 {user.full_name?.charAt(0) || '?'}
                               </div>
                               <div>
-                                <div className="font-bold text-theme-text-primary flex items-center gap-2">
+                                <div className="font-bold text-theme-text-primary flex items-center gap-2 text-sm">
                                   {user.full_name}
-                                  {idx < 3 && <span className="text-yellow-500">👑</span>}
+                                  {idx < 3 && <span className="text-lg drop-shadow-md">👑</span>}
                                 </div>
                                 <div className="text-xs text-theme-text-tertiary">{user.email}</div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-right font-mono font-medium text-emerald-500">
+                          <td className="px-6 py-4 text-right font-mono font-medium text-emerald-500 text-sm">
                             {formatNumber(user.score || 0)}
                           </td>
-                          <td className="px-6 py-4 text-right font-mono text-theme-text-secondary">
+                          <td className="px-6 py-4 text-right font-mono text-theme-text-secondary text-sm">
                             {Math.floor((user.time_spent || 0) / 60)} min
                           </td>
                           <td className="px-6 py-4 text-center">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-500">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20 shadow-sm">
                               Lvl {Math.floor(Math.sqrt((user.score || 0) / 100)) + 1}
                             </span>
                           </td>

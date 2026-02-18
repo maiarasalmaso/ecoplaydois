@@ -1,0 +1,13 @@
+DEPLOYMENT STATUS: COMPLETED
+
+Wait for Vercel rebuild (~2 minutes).
+
+Changes Applied:
+1. Admin Panel Simplified: No charts, no stars, only text comments grouped by user.
+2. Deployment Fix: Removed exposed API key from `quiz.ts`.
+3. Ambiguity Fix: Updated legacy `frontend/` folder code just in case Vercel builds from there.
+4. Cleanup: Removed obsolete tests.
+
+Next Steps:
+- Check your live URL.
+- If you still see the old version, force a rebuild in Vercel dashboard or clear browser cache.
