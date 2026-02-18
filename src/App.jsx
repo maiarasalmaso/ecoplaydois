@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import { GameStateProvider } from '@/context/GameStateContext';
 import { AuthProvider } from '@/context/AuthContext';
@@ -68,7 +68,13 @@ const RouteFallback = () => (
   </div>
 );
 
+import { initAudio } from '@/utils/audioManager';
+
 function App() {
+  useEffect(() => {
+    initAudio();
+  }, []);
+
   return (
     <Router>
       <AuthProvider>

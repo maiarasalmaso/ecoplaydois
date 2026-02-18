@@ -40,10 +40,16 @@ const DIRECTIONS = {
 
 // --- GBL: LEARNING CONTENT ---
 const BIO_ITEMS = [
-  { type: 'sun', label: '☀️', name: 'Energia Solar', energy: 30, msg: "Solar: Fonte inesgotável! +30W" },
-  { type: 'wind', label: '🌬️', name: 'Energia Eólica', energy: 25, msg: "Eólica: Sem emissões! +25W" },
-  { type: 'water', label: '💧', name: 'Hidrelétrica', energy: 20, msg: "Hídrica: Poder da água! +20W" },
-  { type: 'bio', label: '🌱', name: 'Biomassa', energy: 15, msg: "Biomassa: Ciclo neutro! +15W" },
+  { type: 'sun', label: '☀️', name: 'Energia Solar', energy: 30, co2: -5, msg: "Solar: Fonte inesgotável! +30W / -5% CO2" },
+  { type: 'wind', label: '🌬️', name: 'Energia Eólica', energy: 25, co2: -5, msg: "Eólica: Sem emissões! +25W / -5% CO2" },
+  { type: 'water', label: '💧', name: 'Hidrelétrica', energy: 20, co2: -3, msg: "Hídrica: Poder da água! +20W / -3% CO2" },
+  { type: 'bio', label: '🌱', name: 'Biomassa', energy: 15, co2: -2, msg: "Biomassa: Ciclo neutro! +15W / -2% CO2" },
+];
+
+const NON_RENEWABLE_ITEMS = [
+  { type: 'smoke', label: '💨', name: 'Fumaça (Poluição)', energy: -10, co2: 15, msg: "CUIDADO: Emissões de CO2! +15% Poluição" },
+  { type: 'coal', label: '🪨', name: 'Carvão (Fóssil)', energy: 50, co2: 20, msg: "ALERTA: Queima de Carvão! +20% Poluição" },
+  { type: 'oil', label: '🛢️', name: 'Petróleo (Fóssil)', energy: 60, co2: 25, msg: "ALERTA: Queima de Petróleo! +25% Poluição" },
 ];
 
 const TRASH_ITEMS = [
@@ -223,6 +229,7 @@ const createInitialState = ({ gridSize }) => {
     challenge: { active: false, deadline: 0, remaining: 0 },
     obstacles: [],
     gameOver: false,
+    co2Level: 0, // 0 to 100
   };
 };
 
@@ -241,6 +248,13 @@ const makeRandomObstacle = (gridSize) => {
   return { x, y, ...itemConfig, isTrash: true };
 };
 
+const makeRandomNonRenewable = (gridSize) => {
+  const itemConfig = pickOne(NON_RENEWABLE_ITEMS);
+  const x = randomInt(0, gridSize);
+  const y = randomInt(0, gridSize);
+  return { x, y, ...itemConfig, isPollutant: true };
+};
+
 const spawnItem = (state) => {
   if (state.challenge.active) return state;
 
@@ -249,9 +263,22 @@ const spawnItem = (state) => {
   const pos = sampleEmptyCell(state);
   if (!pos) return state;
 
+  // Spawn polluted item chance (increases with level)
+  const pollutionChance = Math.min(0.4, state.level * 0.05);
+  let extraItem = state.extraItem;
+
+  if (!extraItem && Math.random() < pollutionChance) {
+    const candidate = makeRandomNonRenewable(state.gridSize);
+    const pos = sampleEmptyCell({ ...state, item: { ...itemConfig, ...pos, isTrash: false } });
+    if (pos) {
+      extraItem = { ...candidate, ...pos };
+    }
+  }
+
   return {
     ...state,
     item: { ...itemConfig, ...pos, isTrash: false },
+    extraItem, // Secondary item (Pollutant)
   };
 };
 
@@ -279,6 +306,7 @@ const maybeAddObstacleOnLevel = (state, nextLevel) => {
       ...next,
       item: candidate,
       recyclables: [],
+      extraItem: next.extraItem || null,
     });
     if (!pos) continue;
     next.obstacles = [...next.obstacles, { ...candidate, ...pos }];
@@ -296,8 +324,17 @@ const applyCollect = (state, collectedItem, nowMs) => {
 
   if (collectedItem.energy) {
     next.score += Math.round(collectedItem.energy * ecoMultiplier);
-    next.foodsEaten += 1;
-    next.lastFeedback = { msg: collectedItem.msg, type: 'good', time: nowMs };
+    if (!collectedItem.isPollutant) {
+      next.foodsEaten += 1;
+    }
+
+    // CO2 Dynamics
+    if (collectedItem.co2) {
+      next.co2Level = clamp(next.co2Level + collectedItem.co2, 0, 100);
+    }
+
+    const type = collectedItem.isPollutant ? 'bad' : 'good';
+    next.lastFeedback = { msg: collectedItem.msg, type, time: nowMs };
   }
 
   // Level progression based on items collected
@@ -332,10 +369,11 @@ const tick = (state, nowMs) => {
   }
 
   const eatingItem = state.item && state.item.x === nextHead.x && state.item.y === nextHead.y;
+  const eatingExtra = state.extraItem && state.extraItem.x === nextHead.x && state.extraItem.y === nextHead.y;
   const recyclableIndex = state.recyclables.findIndex((r) => r.x === nextHead.x && r.y === nextHead.y);
   const eatingRecyclable = recyclableIndex !== -1;
 
-  const grows = eatingItem || eatingRecyclable;
+  const grows = eatingItem || eatingRecyclable || eatingExtra;
   const snakeSet = new Set(state.snake.map((s) => keyForCell(s.x, s.y)));
   const nextHeadKey = keyForCell(nextHead.x, nextHead.y);
   const tailKey = keyForCell(
@@ -362,6 +400,10 @@ const tick = (state, nowMs) => {
     const collectedItem = state.item;
     nextState.item = null;
     nextState = applyCollect(nextState, collectedItem, nowMs);
+  } else if (eatingExtra) {
+    const collectedItem = state.extraItem;
+    nextState.extraItem = null;
+    nextState = applyCollect(nextState, collectedItem, nowMs);
   } else if (eatingRecyclable) {
     // Legacy or Challenge Mode support if maintained
     // ...
@@ -378,14 +420,19 @@ const draw = (ctx, state, render, nowMs, palette = SNAKE_PALETTES.dark) => {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, sizePx, sizePx);
 
+  // Background
   const gradient = ctx.createLinearGradient(0, 0, sizePx, sizePx);
   gradient.addColorStop(0, palette.bgStart);
   gradient.addColorStop(1, palette.bgEnd);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, sizePx, sizePx);
 
+  // Grid (fade out if CO2 is high)
   ctx.strokeStyle = palette.grid;
   ctx.lineWidth = 1;
+  const visibility = Math.max(0.1, 1 - (state.co2Level / 80));
+  ctx.globalAlpha = visibility;
+
   for (let i = 0; i <= gridSize; i += 1) {
     const p = Math.floor(i * cellPx) + 0.5;
     ctx.beginPath();
@@ -397,6 +444,7 @@ const draw = (ctx, state, render, nowMs, palette = SNAKE_PALETTES.dark) => {
     ctx.lineTo(sizePx, p);
     ctx.stroke();
   }
+  ctx.globalAlpha = 1;
 
 
 
@@ -416,6 +464,10 @@ const draw = (ctx, state, render, nowMs, palette = SNAKE_PALETTES.dark) => {
 
   for (const obstacle of state.obstacles) {
     drawToken(obstacle.x, obstacle.y, '#ef4444', obstacle.label);
+  }
+
+  if (state.extraItem) {
+    drawToken(state.extraItem.x, state.extraItem.y, '#f59e0b', state.extraItem.label);
   }
 
   if (state.item) {
@@ -456,6 +508,13 @@ const draw = (ctx, state, render, nowMs, palette = SNAKE_PALETTES.dark) => {
     ctx.fillStyle = palette.hudTrack;
     ctx.fillRect(sizePx * 0.55 + sizePx * 0.4 * t, 8, sizePx * 0.4 * (1 - t), 6);
   }
+
+  // Smog Overlay (CO2 Effect)
+  if (state.co2Level > 0) {
+    const opacity = Math.min(0.85, state.co2Level / 100);
+    ctx.fillStyle = `rgba(30, 20, 10, ${opacity})`;
+    ctx.fillRect(0, 0, sizePx, sizePx);
+  }
 };
 
 const formatMultiplier = (value) => `${value.toFixed(value % 1 === 0 ? 0 : 2)}x`;
@@ -475,6 +534,7 @@ const EcoSnake = () => {
     challengeRemaining: 0,
     challengeMs: 0,
     solarMs: 0,
+    co2Level: 0,
   });
 
   const canvasRef = useRef(null);
@@ -532,6 +592,7 @@ const EcoSnake = () => {
       challengeRemaining: state.challenge.remaining,
       challengeMs,
       solarMs,
+      co2Level: state.co2Level,
     });
   }, []);
 
@@ -720,6 +781,18 @@ const EcoSnake = () => {
               </span>
             </div>
 
+            {/* CO2 Meter */}
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-theme-bg-secondary/50 border border-theme-border">
+              <span className="text-sm">☁️ CO₂</span>
+              <div className="w-24 h-3 bg-gray-700 rounded-full overflow-hidden relative border border-gray-600">
+                <div
+                  className={`h-full transition-all duration-500 ${hud.co2Level > 70 ? 'bg-red-500' : hud.co2Level > 30 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                  style={{ width: `${hud.co2Level}%` }}
+                />
+              </div>
+              <span className="text-xs font-mono w-8 text-right">{hud.co2Level}%</span>
+            </div>
+
             <button
               type="button"
               onClick={togglePause}
@@ -769,6 +842,8 @@ const EcoSnake = () => {
                           Energia <span className="text-theme-text-primary font-mono">{hud.score} W</span>
                           <span className="text-theme-text-tertiary mx-2">•</span>
                           Recorde <span className="text-theme-text-primary font-mono">{bestScore}</span>
+                          <span className="text-theme-text-tertiary mx-2">•</span>
+                          CO₂ <span className={`${hud.co2Level > 70 ? 'text-red-400' : 'text-green-400'} font-mono`}>{hud.co2Level}%</span>
                         </div>
                       </div>
                     </div>

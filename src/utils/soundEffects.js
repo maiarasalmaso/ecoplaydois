@@ -1,17 +1,7 @@
 // Utilitário para efeitos sonoros usando Web Audio API
 // Evita a necessidade de arquivos de áudio externos
 
-let audioContext = null;
-
-const getAudioContext = () => {
-  if (!audioContext) {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (AudioContext) {
-      audioContext = new AudioContext();
-    }
-  }
-  return audioContext;
-};
+import { getAudioContext, resumeAudio } from './audioManager';
 
 const playTone = (freq, type, duration, vol = 0.1) => {
   const ctx = getAudioContext();

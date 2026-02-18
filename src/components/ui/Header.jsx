@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { recordFeedbackCtaClick } from '@/utils/feedbackStore';
 import { isRemoteDbEnabled } from '@/services/remoteDb';
-import { getLevel } from '@/utils/gamification';
+import { getLevelProgress, LEVELS } from '@/utils/gamification';
 import { playNavigation } from '@/utils/soundEffects';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
@@ -22,13 +22,13 @@ const Header = () => {
   const canShowFeedbackCta = Boolean(user) && !isMinimal;
   const isOfflineMode = !isRemoteDbEnabled();
 
-  // Mock de nível e XP para visualização
-  const level = Math.floor(score / 1000) + 1;
-  const xpPercentage = (score % 1000) / 10;
+  // Obter progresso real
+  const { currentLevel, percent } = getLevelProgress(score);
   const streak = user?.streak || 0;
 
-  // Obter nível dinâmico (sincronizado com Dashboard)
-  const currentLevel = getLevel(score);
+  // Calcular nível numérico (1-based)
+  // Calcular nível numérico (1-based)
+  const numericLevel = currentLevel.levelNumber;
 
   const handleLogout = () => {
     logout();
@@ -153,13 +153,13 @@ const Header = () => {
                   {/* Level & XP */}
                   <div className="flex flex-col w-32 gap-1">
                     <div className="flex justify-between text-[10px] font-mono uppercase text-slate-400">
-                      <span>Lvl {level}</span>
+                      <span>Lvl {numericLevel}</span>
                       <span className="text-eco-green">{score} XP</span>
                     </div>
                     <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{ width: `${xpPercentage}%` }}
+                        animate={{ width: `${percent}%` }}
                         className="h-full bg-gradient-to-r from-eco-green to-emerald-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]"
                       />
                     </div>

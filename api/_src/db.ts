@@ -31,8 +31,8 @@ export const getPool = () => {
     pool = new Pool({
         connectionString: cleanUrl,
         max: 10, // Limite para evitar exaustão de conexões no Neon
-        idleTimeoutMillis: 15000,
-        connectionTimeoutMillis: 10000,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 30000,
     });
 
     return pool;

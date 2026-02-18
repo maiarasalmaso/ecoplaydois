@@ -1,20 +1,11 @@
 // ambientSynth.js - Generates Synthwave + Nature ambient sounds using Web Audio API
 
-let audioContext = null;
+import { getAudioContext, resumeAudio } from './audioManager';
+
+const nodes = [];
 let masterGain = null;
 
-// Oscillators and Nodes references to stop them later
-let nodes = [];
-
-const getAudioContext = () => {
-    if (!audioContext) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-            audioContext = new AudioContext();
-        }
-    }
-    return audioContext;
-};
+/* Removed local getAudioContext in favor of import */
 
 const createPinkNoise = (ctx) => {
     const bufferSize = ctx.sampleRate * 2; // 2 seconds buffer
@@ -169,8 +160,9 @@ export const startAmbient = async () => {
 };
 
 export const stopAmbient = () => {
-    if (masterGain && audioContext) {
-        masterGain.gain.setTargetAtTime(0, audioContext.currentTime, 0.5);
+    const ctx = getAudioContext();
+    if (masterGain && ctx) {
+        masterGain.gain.setTargetAtTime(0, ctx.currentTime, 0.5);
         setTimeout(() => {
             nodes.forEach(node => {
                 try { node.stop(); } catch (e) { }
@@ -193,7 +185,8 @@ export const stopAmbient = () => {
 };
 
 export const setAmbientVolume = (limit) => {
-    if (masterGain && audioContext) {
-        masterGain.gain.setTargetAtTime(limit, audioContext.currentTime, 0.1);
+    const ctx = getAudioContext();
+    if (masterGain && ctx) {
+        masterGain.gain.setTargetAtTime(limit, ctx.currentTime, 0.1);
     }
 }

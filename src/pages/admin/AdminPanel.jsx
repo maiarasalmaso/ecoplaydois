@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { BarChart3, Filter, LogOut, RefreshCw, Search, Shield, ArrowLeft, Users, AlertTriangle, FileText, Star, ChevronDown, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, LogOut, RefreshCw, Shield, Users, Search, ChevronDown, ChevronRight, MessageSquare, Calendar, User, Mail } from 'lucide-react';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -24,22 +24,6 @@ const ADMIN_ACCENT = {
   },
 };
 
-const UX_LIKERT = [
-  { id: 'ux_navigation', label: 'Navegação Intuitiva' },
-  { id: 'ux_design', label: 'Design Visual' },
-  { id: 'ux_clarity', label: 'Clareza dos Textos' },
-  { id: 'ux_speed', label: 'Performance' },
-  { id: 'ux_satisfaction', label: 'Satisfação Geral' },
-  { id: 'ux_recommend', label: 'Recomendação' },
-];
-
-const LEARNING_LIKERT = [
-  { id: 'learn_effective', label: 'Aprendizado Novo' },
-  { id: 'learn_reinforce', label: 'Reforço de Práticas' },
-  { id: 'learn_level', label: 'Adequação de Nível' },
-  { id: 'learn_motivation', label: 'Motivação' },
-];
-
 const formatNumber = (value) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(Number.isFinite(value) ? value : 0);
 
 const AdminPanel = () => {
@@ -52,14 +36,18 @@ const AdminPanel = () => {
   const adminContrast = isLight ? '#f8fafc' : '#0b1323';
 
   const [tab, setTab] = useState('users');
-  const [feedbackSubTab, setFeedbackSubTab] = useState('chart');
+  // No feedbackSubTab needed anymore
+
   const [users, setUsers] = useState([]);
   const [feedback, setFeedback] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [expandedFeedback, setExpandedFeedback] = useState(null); // Track expanded row ID
 
-  // Date Filters
+  // Expanded states
+  const [expandedUsers, setExpandedUsers] = useState({});
+
+  // Filters
+  const [searchTerm, setSearchTerm] = useState('');
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
 
@@ -102,33 +90,68 @@ const AdminPanel = () => {
     navigate('/admin');
   };
 
-  const getReviewRating = (f) => {
-    // If rating exists, use it. If not, try to determine from UX satisfaction or default to 0
-    if (f.rating) return Number(f.rating);
-    if (f.ux?.ux_satisfaction) return Number(f.ux.ux_satisfaction);
-    return 0;
+  const toggleUserExpansion = (userId) => {
+    setExpandedUsers(prev => ({
+      ...prev,
+      [userId]: !prev[userId]
+    }));
   };
 
-  const filteredFeedback = feedback
-    .map(f => ({ ...f, computedRating: getReviewRating(f) }))
-    .filter((f) => {
-      if (!dateStart && !dateEnd) return true;
+  // ─── FILTER & GROUP LOGIC ───
+
+  // 1. Filter raw list by Date & Search
+  const filteredRaw = feedback.filter((f) => {
+    // Date Filter
+    if (dateStart) {
       const d = new Date(f.created_at).getTime();
-      const start = dateStart ? new Date(dateStart).getTime() : 0;
-      const end = dateEnd ? new Date(dateEnd).setHours(23, 59, 59, 999) : Infinity;
-      return d >= start && d <= end;
-    })
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      const start = new Date(dateStart).getTime();
+      if (d < start) return false;
+    }
+    if (dateEnd) {
+      const d = new Date(f.created_at).getTime();
+      const end = new Date(dateEnd).setHours(23, 59, 59, 999);
+      if (d > end) return false;
+    }
 
-  // Filter only feedback with actual comments for the comments tab
-  const commentsList = filteredFeedback.filter(f =>
-    f.ux?.ux_open_like || f.ux?.ux_open_improve || f.ux?.ux_open_ideas
-  );
+    // Search Filter (Name or Email)
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      const name = (f.full_name || '').toLowerCase();
+      const email = (f.email || '').toLowerCase();
+      if (!name.includes(term) && !email.includes(term)) return false;
+    }
 
-  const averageRating =
-    filteredFeedback.length > 0
-      ? filteredFeedback.reduce((acc, curr) => acc + (curr.computedRating || 0), 0) / filteredFeedback.length
-      : 0;
+    // CONTENT CHECK: Must have at least one text comment
+    const hasComment =
+      f.ux?.ux_open_like ||
+      f.ux?.ux_open_improve ||
+      f.ux?.ux_open_ideas;
+
+    return Boolean(hasComment);
+  });
+
+  // 2. Group by User (using user_id or email as key fallback)
+  const groupedFeedback = filteredRaw.reduce((acc, curr) => {
+    const key = curr.user_id || curr.email || 'anon';
+    if (!acc[key]) {
+      acc[key] = {
+        user_id: curr.user_id,
+        full_name: curr.full_name || 'Anônimo',
+        email: curr.email || '',
+        comments: []
+      };
+    }
+    acc[key].comments.push(curr);
+    return acc;
+  }, {});
+
+  // 3. Convert to array and Sort by most recent comment
+  const groupedList = Object.values(groupedFeedback).sort((a, b) => {
+    // Sort by latest comment date in each group
+    const latestA = Math.max(...a.comments.map(c => new Date(c.created_at).getTime()));
+    const latestB = Math.max(...b.comments.map(c => new Date(c.created_at).getTime()));
+    return latestB - latestA;
+  });
 
   const MotionDiv = motion.div;
 
@@ -216,7 +239,7 @@ const AdminPanel = () => {
                 : 'bg-theme-bg-tertiary/80 text-theme-text-primary border-theme-border hover:bg-theme-bg-secondary'
                 }`}
             >
-              Avaliações ({filteredFeedback.length})
+              Comentários ({filteredRaw.length})
             </button>
             <button
               onClick={() => setTab('evolution')}
@@ -232,6 +255,7 @@ const AdminPanel = () => {
           {/* Content */}
           {error && <div className="p-4 bg-red-500/20 text-red-300 rounded-xl mb-4 border border-red-500/50">{error}</div>}
 
+          {/* ──────────────── USERS TAB ──────────────── */}
           {tab === 'users' && (
             <div className="overflow-x-auto rounded-2xl border border-theme-border bg-theme-bg-tertiary/20">
               <table className="w-full text-left">
@@ -276,361 +300,162 @@ const AdminPanel = () => {
             </div>
           )}
 
+          {/* ──────────────── FEEDBACK (COMMENTS) TAB ──────────────── */}
           {tab === 'feedback' && (
             <div className="space-y-6">
-              {/* Filters */}
-              <div className="flex flex-wrap items-end gap-4 p-4 rounded-2xl bg-theme-bg-tertiary/10 border border-theme-border">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-theme-text-secondary uppercase">De</label>
+              {/* Filter Bar */}
+              <div className="flex flex-col md:flex-row gap-4 p-4 rounded-2xl bg-theme-bg-tertiary/10 border border-theme-border items-center">
+                <div className="flex-1 w-full relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-text-tertiary" />
                   <input
-                    type="date"
-                    value={dateStart}
-                    onChange={(e) => setDateStart(e.target.value)}
-                    className="block w-full px-3 py-2 rounded-xl bg-theme-bg-secondary border border-theme-border text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)]"
+                    type="text"
+                    placeholder="Buscar por nome ou email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 rounded-xl bg-theme-bg-secondary border border-theme-border text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)] transition-all"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-theme-text-secondary uppercase">Até</label>
-                  <input
-                    type="date"
-                    value={dateEnd}
-                    onChange={(e) => setDateEnd(e.target.value)}
-                    className="block w-full px-3 py-2 rounded-xl bg-theme-bg-secondary border border-theme-border text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)]"
-                  />
+
+                <div className="flex gap-2 w-full md:w-auto">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] uppercase font-bold text-theme-text-tertiary ml-1">De</label>
+                    <input
+                      type="date"
+                      value={dateStart}
+                      onChange={(e) => setDateStart(e.target.value)}
+                      className="px-3 py-1.5 rounded-xl bg-theme-bg-secondary border border-theme-border text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)]"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] uppercase font-bold text-theme-text-tertiary ml-1">Até</label>
+                    <input
+                      type="date"
+                      value={dateEnd}
+                      onChange={(e) => setDateEnd(e.target.value)}
+                      className="px-3 py-1.5 rounded-xl bg-theme-bg-secondary border border-theme-border text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-[color:var(--admin-accent)]"
+                    />
+                  </div>
                 </div>
-                {(dateStart || dateEnd) && (
+
+                {(searchTerm || dateStart || dateEnd) && (
                   <button
-                    onClick={() => { setDateStart(''); setDateEnd(''); }}
-                    className="px-4 py-2 rounded-xl bg-theme-bg-secondary border border-theme-border text-theme-text-secondary hover:text-red-400 hover:border-red-400/50 transition-colors text-sm font-bold"
+                    onClick={() => { setSearchTerm(''); setDateStart(''); setDateEnd(''); }}
+                    className="px-4 py-2 h-auto text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-xl transition-colors whitespace-nowrap"
                   >
-                    Limpar
+                    Limpar Filtros
                   </button>
                 )}
               </div>
 
-              {/* Feedback Sub-Tabs */}
-              <div className="flex gap-4 border-b border-theme-border pb-2">
-                <button
-                  onClick={() => setFeedbackSubTab('chart')}
-                  className={`pb-2 text-sm font-bold transition-all relative ${feedbackSubTab === 'chart'
-                    ? 'text-[color:var(--admin-accent)]'
-                    : 'text-theme-text-secondary hover:text-theme-text-primary'
-                    }`}
-                >
-                  <BarChart3 className="inline mr-2 w-4 h-4" />
-                  Gráfico de Votações
-                  {feedbackSubTab === 'chart' && (
-                    <motion.div
-                      layoutId="activeFeedbackTab"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[color:var(--admin-accent)]"
-                    />
-                  )}
-                </button>
-                <button
-                  onClick={() => setFeedbackSubTab('comments')}
-                  className={`pb-2 text-sm font-bold transition-all relative ${feedbackSubTab === 'comments'
-                    ? 'text-[color:var(--admin-accent)]'
-                    : 'text-theme-text-secondary hover:text-theme-text-primary'
-                    }`}
-                >
-                  <FileText className="inline mr-2 w-4 h-4" />
-                  Comentários ({filteredFeedback.length})
-                  {feedbackSubTab === 'comments' && (
-                    <motion.div
-                      layoutId="activeFeedbackTab"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[color:var(--admin-accent)]"
-                    />
-                  )}
-                </button>
-              </div>
+              {/* Feedback List Grouped by User */}
+              <div className="space-y-4">
+                {groupedList.length === 0 ? (
+                  <div className="p-12 text-center rounded-2xl border border-theme-border bg-theme-bg-tertiary/10 border-dashed">
+                    <MessageSquare className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4 opacity-50" />
+                    <h3 className="text-xl font-bold text-theme-text-secondary">Nenhum comentário encontrado</h3>
+                    <p className="text-theme-text-tertiary mt-2 text-sm">Tente ajustar os filtros ou aguarde novas avaliações.</p>
+                  </div>
+                ) : (
+                  groupedList.map((group, idx) => {
+                    const isExpanded = expandedUsers[group.user_id || group.email] ?? true; // Default expanded? maybe better closed if many. Let's default to closed except first? No, let's default to expanded, usually better visibility.
+                    // Actually user requested "option to expand/collapse".
 
-              {/* Chart View */}
-              {feedbackSubTab === 'chart' && (
-                <div className="p-6 rounded-2xl border border-theme-border bg-theme-bg-tertiary/20">
-                  <h3 className="text-xl font-bold text-theme-text-primary mb-6">Distribuição de Avaliações</h3>
-                  {filteredFeedback.length === 0 ? (
-                    <p className="text-theme-text-tertiary">Ainda não há dados suficientes para o gráfico no período selecionado.</p>
-                  ) : (
-                    <div className="h-64 flex items-end justify-center gap-8 px-4">
-                      {[1, 2, 3, 4, 5].map((star) => {
-                        const count = filteredFeedback.filter((f) => Math.round(f.computedRating) === star).length;
-                        const percentage = filteredFeedback.length > 0 ? (count / filteredFeedback.length) * 100 : 0;
-
-                        return (
-                          <div key={star} className="flex flex-col items-center gap-2 w-16 group">
-                            <div className="relative w-full h-48 flex items-end justify-center bg-theme-bg-tertiary/30 rounded-lg overflow-hidden">
-                              <motion.div
-                                initial={{ height: 0 }}
-                                animate={{ height: `${percentage}%` }}
-                                transition={{ duration: 0.5, ease: 'easeOut' }}
-                                className="w-full bg-[color:var(--admin-accent)] opacity-80 group-hover:opacity-100 transition-opacity relative"
-                              >
-                                {count > 0 && (
-                                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-[color:var(--admin-accent)]">
-                                    {count}
-                                  </span>
-                                )}
-                              </motion.div>
+                    return (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        key={group.user_id || group.email || idx}
+                        className="rounded-2xl border border-theme-border bg-theme-bg-secondary overflow-hidden"
+                      >
+                        {/* User Header Card */}
+                        <div
+                          className="p-4 flex items-center justify-between cursor-pointer hover:bg-theme-bg-tertiary/50 transition-colors"
+                          onClick={() => toggleUserExpansion(group.user_id || group.email)}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[color:var(--admin-accent-surface)] to-transparent border border-[color:var(--admin-accent-border)] flex items-center justify-center text-[color:var(--admin-accent)]">
+                              <User className="w-5 h-5" />
                             </div>
-                            <div className="flex items-center gap-1 font-bold text-theme-text-secondary">
-                              {star} <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                            <div>
+                              <h3 className="font-bold text-theme-text-primary text-lg flex items-center gap-2">
+                                {group.full_name}
+                                <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-theme-bg-tertiary text-theme-text-secondary border border-theme-border">
+                                  {group.comments.length} {group.comments.length === 1 ? 'comentário' : 'comentários'}
+                                </span>
+                              </h3>
+                              <div className="text-sm text-theme-text-tertiary flex items-center gap-1">
+                                <Mail className="w-3 h-3" /> {group.email}
+                              </div>
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-                    <div className="p-4 rounded-xl bg-theme-bg-secondary border border-theme-border">
-                      <div className="text-sm text-theme-text-tertiary">Total de Avaliações</div>
-                      <div className="text-2xl font-bold text-theme-text-primary">{filteredFeedback.length}</div>
-                    </div>
-                    <div className="p-4 rounded-xl bg-theme-bg-secondary border border-theme-border">
-                      <div className="text-sm text-theme-text-tertiary">Média Geral</div>
-                      <div className="text-2xl font-bold text-[color:var(--admin-accent)]">
-                        {averageRating.toFixed(1)}
-                      </div>
-                    </div>
-                    <div className="p-4 rounded-xl bg-theme-bg-secondary border border-theme-border">
-                      <div className="text-sm text-theme-text-tertiary">Semana Atual</div>
-                      <div className="text-2xl font-bold text-theme-text-primary">
-                        {
-                          filteredFeedback.filter((f) => {
-                            const date = new Date(f.created_at);
-                            const now = new Date();
-                            const diffTime = Math.abs(now - date);
-                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                            return diffDays <= 7;
-                          }).length
-                        }
-                      </div>
-                    </div>
-                  </div>
+                          <div className="text-theme-text-tertiary">
+                            {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                          </div>
+                        </div>
 
-                  {/* Detailed Metrics Breakdown */}
-                  <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* UX Metrics */}
-                    <div className="bg-theme-bg-secondary/30 p-6 rounded-2xl border border-theme-border">
-                      <h4 className="font-bold text-theme-text-primary mb-6 flex items-center gap-2">
-                        <Star className="w-5 h-5 text-amber-500 fill-amber-500" /> Experiência do Usuário
-                      </h4>
-                      <div className="space-y-4">
-                        {UX_LIKERT.map((item) => {
-                          const validReviews = filteredFeedback.filter((f) => f.ux && f.ux[item.id]);
-                          const avg =
-                            validReviews.length > 0
-                              ? validReviews.reduce((acc, f) => acc + (Number(f.ux[item.id]) || 0), 0) /
-                              validReviews.length
-                              : 0;
-                          return (
-                            <div key={item.id}>
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-theme-text-secondary">{item.label}</span>
-                                <span className="font-bold text-theme-text-primary">{avg.toFixed(1)}</span>
-                              </div>
-                              <div className="h-2 w-full bg-theme-bg-tertiary rounded-full overflow-hidden">
-                                <div
-                                  style={{ width: `${isNaN(avg) ? 0 : (avg / 5) * 100}%` }}
-                                  className="h-full bg-amber-500 rounded-full transition-all duration-500 ease-in-out"
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                        {/* Comments List */}
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="border-t border-theme-border/50 bg-theme-bg-tertiary/5"
+                            >
+                              <div className="p-4 space-y-4">
+                                {group.comments.map((comment, cIdx) => (
+                                  <div key={comment.id} className="relative pl-6 border-l-2 border-[color:var(--admin-accent-border)]">
+                                    <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-theme-bg-secondary border-2 border-[color:var(--admin-accent)]"></div>
 
-                    {/* Learning Metrics */}
-                    <div className="bg-theme-bg-secondary/30 p-6 rounded-2xl border border-theme-border">
-                      <h4 className="font-bold text-theme-text-primary mb-6 flex items-center gap-2">
-                        <Shield className="w-5 h-5 text-emerald-500 fill-emerald-500" /> Impacto Educacional
-                      </h4>
-                      <div className="space-y-4">
-                        {LEARNING_LIKERT.map((item) => {
-                          const validReviews = filteredFeedback.filter((f) => f.learning && f.learning[item.id]);
-                          const avg =
-                            validReviews.length > 0
-                              ? validReviews.reduce((acc, f) => acc + (Number(f.learning[item.id]) || 0), 0) /
-                              validReviews.length
-                              : 0;
-                          return (
-                            <div key={item.id}>
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-theme-text-secondary">{item.label}</span>
-                                <span className="font-bold text-theme-text-primary">{avg.toFixed(1)}</span>
-                              </div>
-                              <div className="h-2 w-full bg-theme-bg-tertiary rounded-full overflow-hidden">
-                                <div
-                                  style={{ width: `${isNaN(avg) ? 0 : (avg / 5) * 100}%` }}
-                                  className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-in-out"
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+                                    <div className="mb-2 flex items-center gap-2 text-xs text-theme-text-tertiary font-mono uppercase tracking-wider">
+                                      <Calendar className="w-3 h-3" />
+                                      {new Date(comment.created_at).toLocaleDateString()} às {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </div>
 
-              {/* Comments View */}
-              {feedbackSubTab === 'comments' && (
-                <div className="overflow-x-auto rounded-2xl border border-theme-border bg-theme-bg-tertiary/20">
-                  <table className="w-full text-left">
-                    <thead className="bg-theme-bg-tertiary/40">
-                      <tr className="text-xs text-theme-text-tertiary uppercase">
-                        <th className="px-6 py-4">Usuário</th>
-                        <th className="px-6 py-4">Nota</th>
-                        <th className="px-6 py-4">Comentário</th>
-                        <th className="px-6 py-4">Data</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-theme-border/50">
-                      {commentsList.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="p-8 text-center text-theme-text-tertiary">
-                            Nenhum comentário encontrado no período.
-                          </td>
-                        </tr>
-                      ) : (
-                        commentsList.map((f) => {
-                          const isExpanded = expandedFeedback === f.id;
-                          return (
-                            <>
-                              <tr
-                                key={f.id}
-                                className={`hover:bg-theme-bg-tertiary/30 transition-colors cursor-pointer ${isExpanded ? 'bg-theme-bg-tertiary/20' : ''
-                                  }`}
-                                onClick={() => setExpandedFeedback(isExpanded ? null : f.id)}
-                              >
-                                <td className="px-6 py-4">
-                                  <div className="font-bold text-theme-text-primary flex items-center gap-2">
-                                    {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                                    {f.full_name || 'Anônimo'}
-                                  </div>
-                                  <div className="text-xs text-theme-text-tertiary font-normal ml-6">{f.email}</div>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <div className="flex items-center gap-1 font-bold text-yellow-500 w-fit">
-                                    {f.computedRating} <Star className="w-3 h-3 fill-yellow-500" />
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <div className="flex flex-col gap-1 text-theme-text-secondary text-sm p-2 rounded bg-theme-bg-primary/50 border border-theme-border/50">
-                                    {f.ux?.ux_open_like ? (
-                                      <div>
-                                        <span className="font-bold text-emerald-500/80 text-xs uppercase mr-1">Gostou:</span>
-                                        {f.ux.ux_open_like}
-                                      </div>
-                                    ) : null}
-                                    {f.ux?.ux_open_improve ? (
-                                      <div>
-                                        <span className="font-bold text-amber-500/80 text-xs uppercase mr-1">Melhorar:</span>
-                                        {f.ux.ux_open_improve}
-                                      </div>
-                                    ) : null}
-                                    {f.ux?.ux_open_ideas ? (
-                                      <div>
-                                        <span className="font-bold text-blue-500/80 text-xs uppercase mr-1">Ideia:</span>
-                                        {f.ux.ux_open_ideas}
-                                      </div>
-                                    ) : null}
-                                    {!f.ux?.ux_open_like && !f.ux?.ux_open_improve && !f.ux?.ux_open_ideas && (
-                                      <div className="italic opacity-50 text-center">Sem comentário escrito</div>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 text-theme-text-tertiary text-sm">
-                                  {new Date(f.created_at).toLocaleDateString()}
-                                </td>
-                              </tr>
-                              {isExpanded && (
-                                <tr className="bg-theme-bg-tertiary/10">
-                                  <td colSpan={5} className="px-6 py-4 border-b border-theme-border/30">
-                                    <motion.div
-                                      initial={{ opacity: 0, height: 0 }}
-                                      animate={{ opacity: 1, height: 'auto' }}
-                                      className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm"
-                                    >
-                                      <div>
-                                        <h4 className="font-bold text-theme-text-primary mb-3 flex items-center gap-2">
-                                          <Star className="w-4 h-4 text-amber-500" /> Experiência (UX)
-                                        </h4>
-                                        <div className="space-y-2">
-                                          {UX_LIKERT.map((q) => (
-                                            <div key={q.id} className="flex justify-between items-center border-b border-theme-border/30 pb-1">
-                                              <span className="text-theme-text-secondary">{q.label}</span>
-                                              <div className="flex gap-0.5">
-                                                {[1, 2, 3, 4, 5].map((s) => (
-                                                  <Star
-                                                    key={s}
-                                                    className={`w-3 h-3 ${s <= (f.ux?.[q.id] || 0)
-                                                      ? 'fill-amber-500 text-amber-500'
-                                                      : 'text-theme-border'
-                                                      }`}
-                                                  />
-                                                ))}
-                                              </div>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <h4 className="font-bold text-theme-text-primary mb-3 flex items-center gap-2">
-                                          <Shield className="w-4 h-4 text-emerald-500" /> Aprendizado
-                                        </h4>
-                                        <div className="space-y-2">
-                                          {LEARNING_LIKERT.map((q) => (
-                                            <div key={q.id} className="flex justify-between items-center border-b border-theme-border/30 pb-1">
-                                              <span className="text-theme-text-secondary">{q.label}</span>
-                                              <div className="flex gap-0.5">
-                                                {[1, 2, 3, 4, 5].map((s) => (
-                                                  <Star
-                                                    key={s}
-                                                    className={`w-3 h-3 ${s <= (f.learning?.[q.id] || 0)
-                                                      ? 'fill-emerald-500 text-emerald-500'
-                                                      : 'text-theme-border'
-                                                      }`}
-                                                  />
-                                                ))}
-                                              </div>
-                                            </div>
-                                          ))}
-                                        </div>
-                                        {f.badges && f.badges.length > 0 && (
-                                          <div className="mt-4">
-                                            <h4 className="font-bold text-theme-text-primary mb-2 text-xs uppercase opacity-70">
-                                              Conquistas
-                                            </h4>
-                                            <div className="flex flex-wrap gap-2">
-                                              {f.badges.map((b, idx) => (
-                                                <span
-                                                  key={idx}
-                                                  className="inline-flex items-center px-2 py-1 rounded bg-theme-bg-tertiary border border-theme-border text-xs font-medium text-theme-text-secondary"
-                                                >
-                                                  {b}
-                                                </span>
-                                              ))}
-                                            </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                      {comment.ux?.ux_open_like && (
+                                        <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl">
+                                          <div className="text-xs font-bold text-emerald-500 uppercase mb-1 flex items-center gap-1">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Gostou
                                           </div>
-                                        )}
-                                      </div>
-                                    </motion.div>
-                                  </td>
-                                </tr>
-                              )}
-                            </>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                                          <p className="text-sm text-theme-text-primary whitespace-pre-wrap leading-relaxed">"{comment.ux.ux_open_like}"</p>
+                                        </div>
+                                      )}
+
+                                      {comment.ux?.ux_open_improve && (
+                                        <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl">
+                                          <div className="text-xs font-bold text-amber-500 uppercase mb-1 flex items-center gap-1">
+                                            <span className="w-2 h-2 rounded-full bg-amber-500"></span> Melhorar
+                                          </div>
+                                          <p className="text-sm text-theme-text-primary whitespace-pre-wrap leading-relaxed">"{comment.ux.ux_open_improve}"</p>
+                                        </div>
+                                      )}
+
+                                      {comment.ux?.ux_open_ideas && (
+                                        <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-xl">
+                                          <div className="text-xs font-bold text-blue-500 uppercase mb-1 flex items-center gap-1">
+                                            <span className="w-2 h-2 rounded-full bg-blue-500"></span> Ideia
+                                          </div>
+                                          <p className="text-sm text-theme-text-primary whitespace-pre-wrap leading-relaxed">"{comment.ux.ux_open_ideas}"</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           )}
 
+          {/* ──────────────── EVOLUTION TAB ──────────────── */}
           {tab === 'evolution' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -643,10 +468,8 @@ const AdminPanel = () => {
                     <h3 className="text-4xl font-display font-bold text-theme-text-primary">{users.length}</h3>
                   </div>
                 </div>
+                {/* Note: Removed Global Score and Time Spent if they rely on heavy calculations, but these are from 'users' list so it is fine to keep if users data is lightweight. Assuming users data has score/time_spent as before. */}
                 <div className="bg-theme-bg-secondary/50 p-6 rounded-2xl border border-theme-border relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <BarChart3 className="w-24 h-24 text-emerald-500" />
-                  </div>
                   <div className="relative z-10">
                     <p className="text-sm font-medium text-theme-text-tertiary mb-1">Pontuação Total Global</p>
                     <h3 className="text-4xl font-display font-bold text-emerald-500">
@@ -655,9 +478,6 @@ const AdminPanel = () => {
                   </div>
                 </div>
                 <div className="bg-theme-bg-secondary/50 p-6 rounded-2xl border border-theme-border relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <RefreshCw className="w-24 h-24 text-blue-500" />
-                  </div>
                   <div className="relative z-10">
                     <p className="text-sm font-medium text-theme-text-tertiary mb-1">Tempo Total Jogado</p>
                     <h3 className="text-4xl font-display font-bold text-blue-500">

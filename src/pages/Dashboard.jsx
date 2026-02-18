@@ -26,13 +26,14 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useGameState } from '../context/GameStateContext';
-import { BADGES, getLevel, getNextLevel } from '../utils/gamification';
+import { BADGES, getLevel, getLevelProgress } from '../utils/gamification';
 import { playHover } from '@/utils/soundEffects';
 import { useTheme } from '@/context/ThemeContext';
 import EmptyState from '@/components/ui/EmptyState';
 import EnergySourceCard from '@/components/dashboard/EnergySourceCard';
 import AvatarSelectionModal from '@/components/dashboard/AvatarSelectionModal';
 import { getLeaderboard } from '@/services/remoteDb';
+import EnergyDonationControl from '@/components/dashboard/EnergyDonationControl';
 
 const USERS_KEY = 'ecoplay_users_db';
 const PROGRESS_PREFIX = 'ecoplay_progress_';
@@ -337,13 +338,12 @@ const Dashboard = () => {
   const isLight = theme === 'light';
   const [showAvatarModal, setShowAvatarModal] = useState(false);
 
-  // Safe Score Calculations
   const safeScore = Number.isFinite(Number(score)) ? Number(score) : 0;
-  const currentLevel = getLevel(safeScore);
-  const nextLevel = getNextLevel(safeScore);
 
-  const rawProgress = nextLevel ? ((safeScore - currentLevel.min) / (nextLevel.min - currentLevel.min)) * 100 : 100;
-  const progressToNext = Math.min(100, Math.max(0, Number.isFinite(rawProgress) ? rawProgress : 0));
+  // Calculate Level dynamically
+  const { currentLevel, nextLevel, percent, inLevel, need, isMaxLevel } = getLevelProgress(safeScore);
+  const numericLevel = currentLevel.levelNumber;
+  const progressToNext = percent;
 
 
   const [topPlayers, setTopPlayers] = useState([]);
@@ -407,7 +407,7 @@ const Dashboard = () => {
           <div className="flex-1 text-center md:text-left space-y-2">
             <h1 className="text-4xl font-display font-bold text-theme-text-primary tracking-wide">{user?.name}</h1>
             <div
-              className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-theme-bg-tertiary/60 border border-theme-border ${currentLevel.color}`}
+              className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-theme-bg-tertiary/60 border ${currentLevel.color.replace('text-', 'border-')} ${currentLevel.color}`}
             >
               <Trophy className={`w-4 h-4 ${currentLevel.color}`} />
               <span className="font-mono font-bold uppercase tracking-wider text-sm">{currentLevel.title}</span>
@@ -429,11 +429,11 @@ const Dashboard = () => {
                 whileHover={{ scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
-                {/* Enhanced Tooltip */}
-                <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                  <div className="bg-theme-bg-tertiary/90 backdrop-blur-md border border-theme-border text-theme-text-primary text-[10px] font-bold px-3 py-1 rounded-full shadow-xl">
-                    Faltam {nextLevel ? nextLevel.min - safeScore : 0} XP para {nextLevel?.title || 'o Nível Máximo'}
-                  </div>
+                {/* Enhanced Tooltip removed or simplified */}
+                <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+                  <span className="text-[10px] font-bold text-white drop-shadow-md">
+                    {isMaxLevel ? 'Nível Máximo' : `${Math.floor(inLevel)} / ${need} XP`}
+                  </span>
                 </div>
 
                 <motion.div
@@ -614,62 +614,37 @@ const Dashboard = () => {
                 <p className="text-sm text-theme-text-tertiary">Gerencie e evolua sua base sustentável.</p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-4 bg-theme-bg-tertiary/50 p-3 rounded-2xl border border-theme-border">
-                <div className="flex items-center gap-2 px-3">
-                  <Coins className="w-5 h-5 text-amber-400" />
-                  <div>
-                    <span className="block text-xs font-mono uppercase text-theme-text-tertiary">EcoCredits</span>
-                    <span className="font-display font-bold text-xl text-amber-400">{Math.floor(ecoCredits)}</span>
+              {/* Energy Stats Panel */}
+              <div className={`glass-card rounded-3xl p-6 mb-8 border ${currentLevel.color.replace('text-', 'border-')} shadow-lg bg-theme-bg-secondary/30 backdrop-blur-sm`}>
+                <div className="flex items-center justify-around">
+                  <div className="flex items-center gap-2 px-3">
+                    <div className="p-2 bg-yellow-400/10 rounded-lg">
+                      <Zap className="w-5 h-5 text-yellow-400" />
+                    </div>
+                    <div>
+                      <span className="block text-xs font-mono uppercase text-theme-text-tertiary">Energia</span>
+                      <span className="font-display font-bold text-xl text-yellow-400">{Math.floor(energy)}</span>
+                    </div>
+                  </div>
+                  <div className={`w-px h-8 ${currentLevel.color.replace('text-', 'bg-').replace('700', '200').replace('600', '200').replace('500', '200')}/30`}></div>
+                  <div className="flex items-center gap-2 px-3">
+                    <div className="p-2 bg-green-400/10 rounded-lg">
+                      <BatteryCharging className="w-5 h-5 text-green-400" />
+                    </div>
+                    <div>
+                      <span className="block text-xs font-mono uppercase text-theme-text-tertiary">Produção</span>
+                      <span className="font-display font-bold text-xl text-green-400">+{calculateProduction()}/s</span>
+                    </div>
                   </div>
                 </div>
-                <div className="w-px h-8 bg-theme-border"></div>
-                <div className="flex items-center gap-2 px-3">
-                  <Zap className="w-5 h-5 text-yellow-400" />
-                  <div>
-                    <span className="block text-xs font-mono uppercase text-theme-text-tertiary">Energia</span>
-                    <span className="font-display font-bold text-xl text-yellow-400">{Math.floor(energy)}</span>
-                  </div>
-                </div>
-                <div className="w-px h-8 bg-theme-border"></div>
-                <div className="flex items-center gap-2 px-3">
-                  <BatteryCharging className="w-5 h-5 text-green-400" />
-                  <div>
-                    <span className="block text-xs font-mono uppercase text-theme-text-tertiary">Produção</span>
-                    <span className="font-display font-bold text-xl text-green-400">+{calculateProduction()}/s</span>
-                  </div>
-                </div>
-                {/* Sync Status Removed */}
               </div>
             </div>
 
+
+
             {/* Energy Donation / Grid Stabilization */}
-            <div className="mb-8 bg-gradient-to-r from-theme-bg-tertiary/30 to-theme-bg-secondary border border-theme-border p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-500">
-                  <Zap className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-theme-text-primary">Estabilizar Rede Comunitária</h3>
-                  <p className="text-xs text-theme-text-tertiary">Doe energia excedente para ganhar reputação (XP).</p>
-                  <p className="text-[10px] font-mono text-theme-text-tertiary mt-1 opacity-70">100 Energia = 1 XP</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => convertEnergyToXp(100)}
-                  disabled={energy < 100}
-                  className="px-4 py-2 rounded-xl bg-theme-bg-tertiary hover:bg-theme-bg-primary border border-theme-border text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-theme-text-secondary hover:text-yellow-500"
-                >
-                  Doar 100
-                </button>
-                <button
-                  onClick={() => convertEnergyToXp(1000)}
-                  disabled={energy < 1000}
-                  className="px-4 py-2 rounded-xl bg-theme-bg-tertiary hover:bg-theme-bg-primary border border-theme-border text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-theme-text-secondary hover:text-yellow-500"
-                >
-                  Doar 1000
-                </button>
-              </div>
+            <div className="mb-8">
+              <EnergyDonationControl energy={Math.floor(energy)} onDonate={convertEnergyToXp} />
             </div>
 
             {/* Base Modules Section */}
@@ -928,9 +903,9 @@ const Dashboard = () => {
               })}
             </motion.div>
           </section>
-        </div>
-      </div>
-    </div>
+        </div >
+      </div >
+    </div >
 
   );
 };

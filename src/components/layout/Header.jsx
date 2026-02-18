@@ -9,7 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { recordFeedbackCtaClick } from '@/utils/feedbackStore';
 import { isRemoteDbEnabled } from '@/services/remoteDb';
-import { getLevel } from '@/utils/gamification';
+import { getLevelProgress, LEVELS } from '@/utils/gamification';
 import { playNavigation, playClick, playStart } from '@/utils/soundEffects';
 import TiltContainer from '@/components/ui/TiltContainer';
 import CharacterSelector from '@/components/user/CharacterSelector';
@@ -38,16 +38,15 @@ const Header = () => {
   // Mock de nivel e XP para visualizacao
   // Mock de nivel e XP para visualizacao
   // Prioritize real-time score from GameState, fall back to user.score only if score is 0 and user has data
-  const userScore = score > 0 ? score : (user?.score || 0);
-  const userLevel = getLevel(userScore);
+  // Prioritize real-time score from GameState
+  const safeScore = Number.isFinite(Number(score)) ? Number(score) : 0;
+
 
   // Level calculation matching Dashboard/Gamification utils
-  const level = Math.floor(userScore / 1000) + 1;
-  const xpPercentage = (userScore % 1000) / 10;
+  const { currentLevel, percent } = getLevelProgress(safeScore);
+  const level = currentLevel.levelNumber;
+  const xpPercentage = percent;
   const streak = user?.streak || 0;
-
-  // Obter nivel dinamico (sincronizado com Dashboard)
-  const currentLevel = userLevel;
 
   const handleLogout = () => {
     logout();
@@ -242,7 +241,7 @@ const Header = () => {
                   <div className="flex flex-col w-32 gap-1 cursor-pointer" title={`${score} XP Total`}>
                     <div className="flex justify-between text-[10px] font-mono uppercase text-theme-text-tertiary">
                       <span className="font-bold text-theme-text-primary">Lvl {level}</span>
-                      <span className="text-green-400 font-bold">{userScore} XP</span>
+                      <span className="text-green-400 font-bold">{safeScore} XP</span>
                     </div>
                     <div className="h-1.5 w-full bg-theme-bg-secondary rounded-full overflow-hidden border border-theme-border">
                       <motion.div initial={{ width: 0 }} animate={{ width: `${xpPercentage}%` }} className="h-full bg-gradient-to-r from-green-500 to-green-400" />

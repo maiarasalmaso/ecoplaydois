@@ -446,12 +446,14 @@ const EcoWordSearch = () => {
 
                         <div
                             className="grid gap-0.5 sm:gap-1.5 md:gap-2 relative z-10 w-full"
-                            style={{ gridTemplateColumns: `repeat(${BOARD_SIZE}, minmax(0, 1fr))` }}
+                            style={{ gridTemplateColumns: `repeat(${BOARD_SIZE}, minmax(0, 1fr))`, touchAction: 'none' }}
                         >
                             {gridState.grid.map((row, r) => (
                                 row.map((letter, c) => (
                                     <div
                                         key={`${r}-${c}`}
+                                        data-r={r}
+                                        data-c={c}
                                         onMouseDown={() => handleMouseDown(r, c)}
                                         onTouchStart={(e) => { e.preventDefault(); handleMouseDown(r, c); }}
                                         onMouseEnter={() => handleMouseEnter(r, c)}
@@ -460,10 +462,12 @@ const EcoWordSearch = () => {
                                             const touch = e.touches[0];
                                             const element = document.elementFromPoint(touch.clientX, touch.clientY);
                                             if (element) {
-                                                // Try to reverse engineer the r,c or just use the event if we can attach data attrs
+                                                const targetR = element.getAttribute('data-r');
+                                                const targetC = element.getAttribute('data-c');
+                                                if (targetR !== null && targetC !== null) {
+                                                    handleMouseEnter(parseInt(targetR), parseInt(targetC));
+                                                }
                                             }
-                                            // Touch move logic is complex for grid, sticking to simple tap or mouse for now or basic improvements
-                                            // Ideally we need to map clientX/Y to the grid cells.
                                         }}
                                         onMouseUp={handleMouseUp}
                                         onTouchEnd={handleMouseUp}

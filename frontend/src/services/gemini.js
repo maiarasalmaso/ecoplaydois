@@ -152,14 +152,15 @@ const OPENAI_PROXY_URL = '/api/openai/chat';
 
 const callGeminiAPI = async (prompt, modelName = GEMINI_CONFIG.MODEL_NAME) => {
   const apiKey = getApiKey();
-  
+
   if (!apiKey) {
     throw new Error('Chave de API não configurada');
   }
 
   try {
     const versions = ['v1beta', 'v1'];
-    const models = Array.from(new Set([modelName, 'gemini-1.5-flash', 'gemini-1.5-flash-latest']));
+    // Update model list to include more variants that might be active
+    const models = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-pro'];
     let lastError;
     for (const ver of versions) {
       for (const model of models) {
@@ -192,7 +193,7 @@ const callGeminiAPI = async (prompt, modelName = GEMINI_CONFIG.MODEL_NAME) => {
       }
     }
     throw lastError || new Error('Falha ao chamar API Gemini');
-    
+
   } catch (error) {
     console.error('Erro na chamada da API Gemini:', error);
     throw error;
@@ -220,196 +221,47 @@ const callOpenAIAPI = async (prompt, opts = {}) => {
   }
 };
 
+
+
+
 export const generateQuizQuestions = async (age, topic = 'sustentabilidade e ecologia', count = 5, bypassCache = false) => {
-  console.group('🤖 Gemini Service Debug');
-  console.log('Timestamp:', new Date().toISOString());
-  console.log('Params:', { age, topic, count, bypassCache });
-  const apiKey = getApiKey();
-  console.log('API Key Configured:', !!apiKey);
-  
-  // 1. Cache (Skip if bypassCache is true)
+  console.log('[GeminiService] Requesting questions:', { age, topic, count });
+
+  // 1. Cache
   if (!bypassCache) {
     const cached = getCachedQuestions(age, topic, count);
     if (cached && cached.length >= Number(count || 0)) {
-      console.log('📦 Using cached questions:', cached.length);
-      console.groupEnd();
+      console.log('[GeminiService] Using cached questions');
       return { success: true, questions: cached.slice(0, count), source: 'cache' };
     }
-  } else {
-    console.log('🔄 Bypassing cache for fresh questions');
   }
 
-  // 2. Validate API Key
-  if (!apiKey) {
-    console.warn('❌ Gemini API Key is missing.');
-    console.groupEnd();
-    return { success: false, questions: FALLBACK_QUESTIONS, source: 'fallback', error: 'Chave de API não configurada. Adicione VITE_GEMINI_API_KEY ao arquivo .env' };
-  }
-
+  // 2. Server-side Generation
   try {
-    // 3. Adiciona seed para garantir aleatoriedade real
-    const seed = Date.now() + Math.random();
-    const usedSet = getUsedSet(age, topic);
-    const avoidList = Array.from(usedSet).slice(-15); // Aumentado histórico
-    const ageGuidance = age <= 10
-      ? 'Use linguagem simples, concreta, frases curtas e exemplos do cotidiano infantil.'
-      : age <= 12
-        ? 'Use linguagem clara, introduza conceitos básicos com exemplos acessíveis.'
-        : age <= 14
-          ? 'Use linguagem mais elaborada, explore conceitos intermediários e impactos ambientais.'
-          : 'Use linguagem apropriada para o nível indicado.';
+    const response = await fetch('/api/quiz/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ age, topic, count })
+    });
 
-    // 4. Construct Prompt
-    const prompt = `
-      ATENÇÃO: Você é um professor especialista em educação ambiental.
-      Crie ${count} perguntas de quiz de múltipla escolha para uma criança de ${age} anos sobre o tema "${topic}".
-      
-      REQUISITOS OBRIGATÓRIOS:
-      1. ORTOGRAFIA E GRAMÁTICA: Devem ser IMPECÁVEIS. Verifique acentuação, concordância e pontuação.
-      2. ADEQUAÇÃO: ${ageGuidance}
-      3. DIVERSIDADE: Evite perguntas repetitivas ou muito similares às seguintes: ${JSON.stringify(avoidList)}
-      4. FORMATO: Retorne APENAS um JSON válido.
-      5. Seed de aleatoriedade: ${seed}
-
-      Retorne APENAS um JSON válido com o seguinte formato, sem markdown ou explicações adicionais:
-      [
-        {
-          "id": "unique_id",
-          "question": "Texto da pergunta (Verifique ortografia!)",
-          "options": ["Opção 1", "Opção 2", "Opção 3", "Opção 4"],
-          "correct": 0, // Índice da resposta correta (0-3)
-          "explanation": "Breve explicação educativa sobre a resposta correta"
-        }
-      ]
-      
-      Evite perguntas muito longas.
-    `;
-    console.log('📝 Prompt sent:', prompt.trim().substring(0, 100) + '...');
-
-    // 5. Generate Content
-    console.log('⏳ Waiting for API response...');
-    const start = Date.now();
-    const text = await callGeminiAPI(prompt);
-    const elapsed = Date.now() - start;
-    console.log(`✅ Response received in ${elapsed}ms`);
-    console.log('📦 Raw response length:', text.length);
-
-    // 6. Parse JSON safely
-    const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    let questions;
-    try {
-      questions = JSON.parse(cleanedText);
-    } catch (parseError) {
-      console.error('❌ JSON Parse Error:', parseError);
-      console.log('Bad content:', cleanedText);
-      updateMetrics({ success: false, responseMs: elapsed, error: 'parse_error' });
-      throw new Error('Falha ao processar resposta da IA');
+    if (!response.ok) {
+      throw new Error(`Server API error: ${response.status}`);
     }
 
-    // 7. Validate Structure
-    const validQuestions = (Array.isArray(questions) ? questions : []).filter(q => 
-      q.question && 
-      Array.isArray(q.options) && 
-      q.options.length === 4 && 
-      typeof q.correct === 'number' && 
-      q.explanation
-    );
+    const questions = await response.json();
 
-    if (validQuestions.length === 0) {
-      updateMetrics({ success: false, responseMs: elapsed, error: 'invalid_structure' });
-      throw new Error('Nenhuma pergunta válida gerada');
+    if (!Array.isArray(questions) || questions.length === 0) {
+      throw new Error('No questions returned from server');
     }
 
-    // 8. Filtrar repetidas pelo histórico (não repetir por sessão e por idade)
-    const filtered = validQuestions.filter(q => !usedSet.has(norm(q.question)));
-    let out = filtered.slice(0, count);
+    // Cache results
+    setCachedQuestions(age, topic, questions);
 
-    // 9. Se faltar, tentar uma segunda geração com avoidList expandida
-    if (out.length < count && GEMINI_CONFIG.MAX_RETRIES > 0) {
-      console.log('⚠️ Not enough unique questions, retrying...');
-      const remaining = count - out.length;
-      const avoidExpanded = Array.from(new Set([...avoidList, ...filtered.map(q => norm(q.question))])).slice(-20);
-      const seed2 = Date.now() + Math.random();
-      const prompt2 = `
-        ATENÇÃO: Geração complementar.
-        Crie ${remaining} novas perguntas de quiz de múltipla escolha para ${age} anos sobre "${topic}".
-        Seed: ${seed2}
-        Diretrizes etárias: ${ageGuidance}
-        ORTOGRAFIA: Impecável.
-        NÃO repita perguntas iguais ou similares a: ${JSON.stringify(avoidExpanded)}
-        Formato JSON idêntico ao anterior, sem comentários.
-      `;
-      const start2 = Date.now();
-      try {
-        const text2 = await callGeminiAPI(prompt2);
-        const elapsed2 = Date.now() - start2;
-        let more = [];
-        try {
-          more = JSON.parse(text2.replace(/```json/g, '').replace(/```/g, '').trim());
-        } catch {
-          updateMetrics({ success: false, responseMs: elapsed2, error: 'parse_error_2' });
-          more = [];
-        }
-        const moreValid = (Array.isArray(more) ? more : []).filter(q => 
-          q?.question && Array.isArray(q?.options) && q.options.length === 4 && typeof q.correct === 'number' && q.explanation
-        ).filter(q => !usedSet.has(norm(q.question)));
-        
-        out = out.concat(moreValid.slice(0, remaining));
-        updateMetrics({ success: moreValid.length > 0, responseMs: elapsed2, error: moreValid.length ? null : 'empty_second_batch' });
-      } catch (retryError) {
-        console.error('Retry failed', retryError);
-      }
-    }
-
-    // 10. Atualizar métricas, cache e histórico
-    // Só atualiza cache se tivermos perguntas
-    if (out.length > 0) {
-      updateMetrics({ success: true, responseMs: elapsed });
-      // Se bypassCache for true, nós AINDA gravamos no cache para futuras consultas (com novo timestamp), 
-      // mas não lemos dele na entrada.
-      setCachedQuestions(age, topic, out);
-      addUsedQuestions(age, topic, out);
-    }
-    
-    console.log(`✨ Successfully generated ${out.length} unique questions`);
-    console.groupEnd();
-    
-    // Se ainda assim tivermos 0, lançar erro para cair no fallback
-    if (out.length === 0) {
-      throw new Error('Falha ao gerar perguntas únicas após retentativas');
-    }
-
-    return { success: true, questions: out, source: 'api' };
+    return { success: true, questions, source: 'api' };
 
   } catch (error) {
-    console.error('❌ Error generating questions:', error);
-    try {
-      const startO = Date.now();
-      const textO = await callOpenAIAPI(prompt);
-      const cleanedO = textO.replace(/```json/g, '').replace(/```/g, '').trim();
-      let questionsO = [];
-      try {
-        questionsO = JSON.parse(cleanedO);
-      } catch {
-        throw new Error('Falha ao processar resposta da OpenAI');
-      }
-      const usedSet = getUsedSet(age, topic);
-      const validO = (Array.isArray(questionsO) ? questionsO : []).filter(q => 
-        q?.question && Array.isArray(q?.options) && q.options.length === 4 && typeof q.correct === 'number' && q.explanation
-      ).filter(q => !usedSet.has(norm(q.question)));
-      const outO = validO.slice(0, count);
-      if (outO.length === 0) throw new Error('Nenhuma pergunta válida gerada pela OpenAI');
-      setCachedQuestions(age, topic, outO);
-      addUsedQuestions(age, topic, outO);
-      updateMetrics({ success: true, responseMs: Date.now() - startO });
-      console.groupEnd();
-      return { success: true, questions: outO, source: 'openai' };
-    } catch (err2) {
-      console.error('OpenAI fallback failed:', err2);
-      updateMetrics({ success: false, responseMs: 0, error: err2?.message });
-      console.groupEnd();
-      return { success: false, questions: FALLBACK_QUESTIONS, source: 'fallback', error: err2?.message || error.message };
-    }
+    console.error('[GeminiService] Generation failed:', error);
+    return { success: false, questions: FALLBACK_QUESTIONS, source: 'fallback', error: error.message };
   }
 };
 
@@ -452,7 +304,7 @@ export const generateEcoTip = async () => {
 
   try {
     const seed = Date.now() + Math.random();
-    
+
     const prompt = `
       Gere uma "Dica Rápida" ÚNICA e CRIATIVA sobre sustentabilidade, economia de energia ou ecologia para crianças.
       A dica deve ter no máximo 15 palavras.
@@ -463,7 +315,7 @@ export const generateEcoTip = async () => {
     `;
 
     const text = await callGeminiAPI(prompt);
-    
+
     return { success: true, tip: text.trim(), source: 'api' };
   } catch (error) {
     console.error('Error generating tip:', error);
@@ -478,21 +330,21 @@ export const generateEcoTip = async () => {
     }
     // Lista expandida de fallbacks para garantir variedade mesmo sem IA
     const fallbackTips = [
-       "Plante uma árvore e ajude a limpar o ar que respiramos!",
-       "Separe o lixo reciclável do orgânico para ajudar a natureza.",
-       "Use a água da chuva para regar as plantas do jardim.",
-       "Troque sacolas plásticas por sacolas retornáveis ao fazer compras.",
-       "Desligar a torneira enquanto escova os dentes economiza muita água!",
-       "Prefira brinquedos feitos de materiais reciclados ou madeira.",
-       "Doe roupas e brinquedos que não usa mais em vez de jogar fora.",
-       "Caminhe ou use bicicleta para ir a lugares perto de casa.",
-       "Evite canudos de plástico, eles poluem os oceanos.",
-       "Apague a luz se o sol estiver iluminando o quarto!"
+      "Plante uma árvore e ajude a limpar o ar que respiramos!",
+      "Separe o lixo reciclável do orgânico para ajudar a natureza.",
+      "Use a água da chuva para regar as plantas do jardim.",
+      "Troque sacolas plásticas por sacolas retornáveis ao fazer compras.",
+      "Desligar a torneira enquanto escova os dentes economiza muita água!",
+      "Prefira brinquedos feitos de materiais reciclados ou madeira.",
+      "Doe roupas e brinquedos que não usa mais em vez de jogar fora.",
+      "Caminhe ou use bicicleta para ir a lugares perto de casa.",
+      "Evite canudos de plástico, eles poluem os oceanos.",
+      "Apague a luz se o sol estiver iluminando o quarto!"
     ];
-    return { 
-      success: false, 
-      tip: fallbackTips[Math.floor(Math.random() * fallbackTips.length)], 
-      source: 'error_fallback' 
+    return {
+      success: false,
+      tip: fallbackTips[Math.floor(Math.random() * fallbackTips.length)],
+      source: 'error_fallback'
     };
   }
 };

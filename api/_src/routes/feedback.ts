@@ -87,11 +87,11 @@ router.get('/check', authenticateToken, async (req: AuthRequest, res: Response) 
 router.get('/', authenticateToken, adminMiddleware, async (req: AuthRequest, res: Response) => {
     try {
         const result = await query(
-            `SELECT f.id, f.score, f.level, f.ux, f.learning, f.meta, f.created_at, u.full_name, u.email 
+            `SELECT f.id, f.ux, f.created_at, u.full_name, u.email, u.id as user_id
        FROM feedback_responses f 
        LEFT JOIN users u ON f.local_user_id = u.id 
        ORDER BY f.created_at DESC 
-       LIMIT 50`
+       LIMIT 100`
         );
 
         res.json(result.rows);

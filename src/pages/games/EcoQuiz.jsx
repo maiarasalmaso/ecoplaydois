@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Brain, CheckCircle2, XCircle, Trophy, Star, ChevronRight, AlertCircle, Menu, X, RotateCcw, LogOut, Sparkles, Leaf, Zap, Droplets, Heart } from 'lucide-react';
+import { ArrowLeft, Brain, CheckCircle2, XCircle, Trophy, Star, ChevronRight, AlertCircle, Menu, X, RotateCcw, LogOut, Sparkles, Leaf, Zap, Droplets, Heart, HelpCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useGameState } from '../../context/GameStateContext';
 import { loadManualQuestions, recordManualQuestionOutcome } from '../../utils/quizData';
@@ -28,11 +28,6 @@ const EcoQuiz = () => {
   const [loadingAi, setLoadingAi] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState('sustentabilidade');
 
-  const TOPICS = [
-    { id: 'sustentabilidade', label: 'Sustentabilidade', icon: Leaf },
-    { id: 'energia', label: 'Energia Renovável', icon: Zap },
-  ];
-
   // Seleção de Idade
   const handleAgeSelect = async (age) => {
     playSelect();
@@ -40,31 +35,49 @@ const EcoQuiz = () => {
 
     if (isAiMode) {
       setLoadingAi(true);
+      console.log('Iniciando geração de quiz IA...', { age, topic: selectedTopic });
+
       try {
-        const topicLabel = TOPICS.find(t => t.id === selectedTopic)?.label || selectedTopic;
-        const response = await api.post('/quiz/generate', { age, topic: topicLabel });
+        const response = await api.post('/quiz/generate', {
+          age,
+          topic: selectedTopic || 'sustentabilidade e energia renovável',
+          count: 3
+        });
+
+        console.log('Resposta da IA recebida:', response.status);
+
         if (response.data && Array.isArray(response.data)) {
           setQuestions(response.data);
-          resetQuiz();
         } else {
-          throw new Error('Formato inválido');
+          console.error('Resposta inválida da IA:', response.data);
+          throw new Error('Formato inválido da IA');
         }
       } catch (error) {
-        console.error('Erro ao gerar quiz com IA:', error);
-        const msg = error.response?.data?.error || 'Não foi possível gerar o quiz com IA.';
-        alert(`${msg} Tentando carregar perguntas padrão...`);
+        console.error('Erro DETALHADO ao gerar quiz com IA:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        });
+
+        playError();
+        const serverMsg = error.response?.data?.message || error.message;
+        alert(`O Professor Eco teve um probleminha técnico! 😅\nErro: ${serverMsg}\nCarregando perguntas manuais...`);
+
+        // Fallback to manual questions
         const qs = loadManualQuestions(age);
         setQuestions(qs);
-        resetQuiz();
       } finally {
         setLoadingAi(false);
+        resetQuiz();
       }
     } else {
+      // Standard Mode
       const qs = loadManualQuestions(age);
       setQuestions(qs);
       resetQuiz();
     }
   };
+
 
   const resetQuiz = () => {
     setCurrentQuestionIndex(0);
@@ -80,7 +93,6 @@ const EcoQuiz = () => {
     setSelectedAge(null);
     setIsMenuOpen(false);
     setQuestions([]); // Limpa perguntas anteriores
-    setLoadingAi(false);
   };
 
   // ... (rest of logic handles)
@@ -107,13 +119,10 @@ const EcoQuiz = () => {
       playError();
     }
 
-    // Record outcome
+    // Record outcome appropriately
     if (isAiMode) {
-      // Import this at the top: import { recordQuestionOutcome } from '@/services/gemini';
-      // Since I can't do multiple file edits in one go easily without confusion, I will do the import separately or rely on existing knowledge.
-      // The user prompt asked to adapt.
-      // Let's assume I will add the import next.
-      recordQuestionOutcome({ questionId: currentQ.id, age: selectedAge, correct });
+      // AI mode tracking if needed, or generic
+      recordManualQuestionOutcome({ questionId: currentQ.id, age: selectedAge, correct });
     } else {
       recordManualQuestionOutcome({ questionId: currentQ.id, age: selectedAge, correct });
     }
@@ -146,110 +155,130 @@ const EcoQuiz = () => {
   };
 
   // Renderização da Tela Inicial (Seleção de Idade)
-  if (!selectedAge || loadingAi) {
+  if (!selectedAge) {
     return (
       <div className="min-h-screen pt-20 px-4 flex flex-col items-center max-w-4xl mx-auto">
         <Link to="/games" className="self-start mb-8 flex items-center gap-2 text-theme-text-secondary hover:text-theme-text-primary transition-colors">
           <ArrowLeft className="w-5 h-5" />
           <span>Voltar ao Arcade</span>
         </Link>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8 w-full"
+        >
+          <div className="w-20 h-20 bg-indigo-100 dark:bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-indigo-500/30">
+            <Brain className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <h1 className="text-4xl font-display font-bold text-theme-text-primary mb-4">EcoQuiz</h1>
+          <p className="text-theme-text-secondary text-lg max-w-lg mx-auto mb-8">
+            Escolha sua idade para começar o desafio de conhecimentos sustentáveis!
+          </p>
 
-        {loadingAi ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-20"
-          >
-            <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-6"></div>
-            <h2 className="text-2xl font-bold text-theme-text-primary mb-2">Gerando Quiz com IA...</h2>
-            <p className="text-theme-text-secondary">Criando perguntas sobre {TOPICS.find(t => t.id === selectedTopic)?.label}...</p>
-          </motion.div>
-        ) : (
-          <>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center mb-8 w-full"
+          {/* AI Toggle Section */}
+          <div className="flex items-center justify-center gap-3 mb-8 w-full relative z-40">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                playSelect();
+                setIsAiMode(!isAiMode);
+              }}
+              className={`
+                px-6 py-3 rounded-xl border flex items-center gap-2 transition-all font-bold shadow-lg
+                ${isAiMode
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 border-transparent text-white ring-2 ring-indigo-500/50'
+                  : 'bg-theme-bg-secondary border-theme-border text-theme-text-secondary hover:border-indigo-500 hover:text-indigo-500'
+                }
+              `}
             >
-              <div className="w-20 h-20 bg-indigo-100 dark:bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-indigo-500/30">
-                <Brain className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
-              </div>
-              <h1 className="text-4xl font-display font-bold text-theme-text-primary mb-4">EcoQuiz</h1>
-              <p className="text-theme-text-secondary text-lg max-w-lg mx-auto mb-8">
-                Escolha sua idade para começar o desafio de conhecimentos sustentáveis!
-              </p>
+              <Sparkles className={`w-5 h-5 ${isAiMode ? 'text-yellow-300 animate-pulse' : ''}`} />
+              <span>
+                {isAiMode ? 'Modo IA Ativado!' : 'Ativar Modo IA'}
+              </span>
+              {isAiMode && <span className="ml-2 bg-white/20 px-2 py-0.5 rounded text-xs">BETA</span>}
+            </motion.button>
 
+            {/* Help Button with Tooltip */}
+            <div className="relative group">
               <button
-                onClick={() => setIsAiMode(!isAiMode)}
-                className={`
-              inline-flex items-center gap-3 px-6 py-3 rounded-full border-2 transition-all font-bold mb-8
-              ${isAiMode
-                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)]'
-                    : 'bg-theme-bg-secondary border-theme-border text-theme-text-secondary hover:border-indigo-500/50'
-                  }
-            `}
+                className="w-12 h-12 flex items-center justify-center rounded-xl bg-theme-bg-secondary border border-theme-border text-theme-text-secondary hover:text-indigo-500 hover:border-indigo-500 transition-colors shadow-sm cursor-help"
+                aria-label="Sobre o modo IA"
               >
-                <Sparkles className={`w-5 h-5 ${isAiMode ? 'animate-pulse' : ''}`} />
-                {isAiMode ? 'Modo IA Ativado ✨' : 'Ativar Modo IA'}
+                <HelpCircle className="w-6 h-6" />
               </button>
 
-              {isAiMode && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  className="mb-8 overflow-hidden"
-                >
-                  <p className="text-sm text-theme-text-secondary mb-4 uppercase tracking-wider font-bold">Escolha um Tema</p>
-                  <div className="flex flex-wrap justify-center gap-3 max-w-2xl mx-auto">
-                    {TOPICS.map((topic) => {
-                      const Icon = topic.icon;
-                      const isSelected = selectedTopic === topic.id;
-                      return (
-                        <button
-                          key={topic.id}
-                          onClick={() => setSelectedTopic(topic.id)}
-                          className={`
-                            flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all
-                            ${isSelected
-                              ? 'bg-indigo-100 dark:bg-indigo-500/20 border-indigo-500 text-indigo-700 dark:text-indigo-300 shadow-lg shadow-indigo-500/10'
-                              : 'bg-theme-bg-secondary border-theme-border text-theme-text-secondary hover:border-indigo-500/50 hover:bg-theme-bg-tertiary'
-                            }
-                          `}
-                        >
-                          <Icon className="w-4 h-4" />
-                          <span className="font-bold">{topic.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-            </motion.div>
+              {/* Tooltip Content */}
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 w-72 p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-indigo-100 dark:border-indigo-900/50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-bottom scale-95 group-hover:scale-100 pointer-events-none group-hover:pointer-events-auto">
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white dark:bg-slate-800 border-b border-r border-indigo-100 dark:border-indigo-900/50 rotate-45"></div>
 
-            {/* Age Selection Input */}
-            {/* Age Selection Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 w-full">
-              {[10, 11, 12, 13, 14].map((age) => (
-                <motion.button
-                  key={age}
-                  whileHover={{ scale: 1.05, translateY: -5 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleAgeSelect(age)}
-                  className={`
-                    aspect-square backdrop-blur-md rounded-2xl border transition-all flex flex-col items-center justify-center gap-2 group
-                    ${isAiMode
-                      ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-500/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:border-indigo-400'
-                      : 'bg-theme-bg-secondary/80 border-theme-border hover:bg-theme-bg-tertiary hover:border-indigo-500'
-                    }
-                  `}
-                >
-                  <span className={`text-4xl font-bold transition-colors ${isAiMode ? 'text-indigo-700 dark:text-indigo-300' : 'text-theme-text-primary group-hover:text-indigo-400'}`}>{age}</span>
-                  <span className="text-sm text-theme-text-tertiary uppercase tracking-wider">Anos</span>
-                </motion.button>
-              ))}
+                <h3 className="font-bold text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                  <Brain className="w-4 h-4" />
+                  Diferença dos Modos
+                </h3>
+
+                <div className="space-y-3 text-sm">
+                  <div className="flex gap-3 items-start">
+                    <div className="p-1.5 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg text-indigo-600 shrink-0 mt-0.5">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-700 dark:text-slate-200">Modo IA</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
+                        Perguntas infinitas e inéditas criadas na hora pelo Professor Eco!
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-100 dark:border-slate-700/50"></div>
+
+                  <div className="flex gap-3 items-start">
+                    <div className="p-1.5 bg-slate-50 dark:bg-slate-700/30 rounded-lg text-slate-500 shrink-0 mt-0.5">
+                      <Leaf className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-700 dark:text-slate-200">Modo Clássico</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
+                        Perguntas selecionadas especialmente para você aprender brincando.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </>
-        )}
+          </div>
+
+        </motion.div>
+
+        {/* Age Selection Input */}
+        {/* Age Selection Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 w-full">
+          {[10, 11, 12, 13, 14].map((age) => (
+            <motion.button
+              key={age}
+              whileHover={{ scale: 1.05, translateY: -5 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleAgeSelect(age)}
+              className="aspect-square backdrop-blur-md rounded-2xl border transition-all flex flex-col items-center justify-center gap-2 group bg-theme-bg-secondary/80 border-theme-border hover:bg-theme-bg-tertiary hover:border-indigo-500"
+            >
+              <span className="text-4xl font-bold transition-colors text-theme-text-primary group-hover:text-indigo-400">{age}</span>
+              <span className="text-sm text-theme-text-tertiary uppercase tracking-wider">Anos</span>
+            </motion.button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Loading State
+  if (loadingAi) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xl font-bold text-theme-text-primary animate-pulse">
+          Professor Eco está criando seu desafio... 🌿⚡
+        </p>
+        <p className="text-theme-text-secondary text-sm">Isso pode levar alguns segundos.</p>
       </div>
     );
   }
@@ -491,8 +520,8 @@ const EcoQuiz = () => {
                     <h3 className={`font-bold mb-1 ${isCorrect ? 'text-green-700 dark:text-green-400' : 'text-indigo-700 dark:text-indigo-400'}`}>
                       {isCorrect ? 'Muito bem!' : 'Sabia dessa?'}
                     </h3>
-                    <p className="text-theme-text-secondary leading-relaxed">
-                      {isAiMode && <span className="text-indigo-700 dark:text-indigo-400 font-bold mr-2 text-xs uppercase tracking-wider">Dica da IA:</span>}
+                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                      {isAiMode && <span className="text-indigo-800 dark:text-indigo-300 font-bold mr-2 text-xs uppercase tracking-wider">Dica da IA:</span>}
                       {currentQuestion.explanation}
                     </p>
                   </div>

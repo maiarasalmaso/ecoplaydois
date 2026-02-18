@@ -81,12 +81,11 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="text-theme-text-primary font-bold text-lg mb-3">Links</h3>
+            <h3 className="text-theme-text-primary font-bold text-lg mb-3">Navegação</h3>
             <ul className="space-y-3 text-sm">
               <li>
                 <Link
                   to="/about"
-
                   onClick={() => playClick()}
                   aria-label="Sobre nós: conheça a história, missão e equipe do EcoPlay"
                   className="inline-flex font-medium text-theme-text-primary hover:text-green-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400/60 rounded"
@@ -100,7 +99,6 @@ const Footer = () => {
               <li>
                 <Link
                   to="/privacy"
-
                   onClick={() => playClick()}
                   aria-label="Segurança e privacidade: leia nossa política de proteção de dados"
                   className="inline-flex font-medium text-theme-text-primary hover:text-green-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400/60 rounded"

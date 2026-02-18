@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { query } from '../db.js';
 import { comparePassword } from '../utils/security.js';
+import { checkAndRefreshStreak } from '../utils/streak.js';
 
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 
@@ -17,13 +18,15 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
 
     try {
         const userId = req.user.userId;
-        const result = await query('SELECT id, email, full_name, role, streak, score, avatar, level FROM users WHERE id = $1', [userId]);
+        const result = await query('SELECT id, email, full_name, role, streak, score, avatar, level, last_login FROM users WHERE id = $1', [userId]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        res.json(result.rows[0]);
+        let userResult = result.rows[0];
+        userResult = await checkAndRefreshStreak(userResult);
+        res.json(userResult);
     } catch (error) {
         console.error('Error fetching current user:', error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -86,13 +89,13 @@ router.post('/login', async (req: Request, res: Response) => {
         }
 
         // Find User
-        const result = await query('SELECT id, email, password_hash, full_name, role, streak, score, avatar, level FROM users WHERE email = $1', [email]);
+        const result = await query('SELECT id, email, password_hash, full_name, role, streak, score, avatar, level, last_login FROM users WHERE email = $1', [email]);
 
         if (result.rows.length === 0) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        const user = result.rows[0];
+        let user = result.rows[0];
 
         // Verify Password
         const isMatch = await comparePassword(password, user.password_hash);
@@ -101,48 +104,8 @@ router.post('/login', async (req: Request, res: Response) => {
         }
 
         // ========== STREAK LOGIC (UTC) ==========
-        const now = new Date();
-        const todayStr = now.toISOString().split('T')[0]; // UTC YYYY-MM-DD
-
-        // Use users.last_login as the source of truth
-        const lastLoginDate = user.last_login ? new Date(user.last_login) : null;
-        const lastLoginStr = lastLoginDate ? lastLoginDate.toISOString().split('T')[0] : null;
-
-        let newStreak = user.streak || 0;
-
-        if (lastLoginStr === todayStr) {
-            // Same day login: Maintain streak, unlikely to be 0 if logged in before, but ensure min 1
-            if (newStreak === 0) newStreak = 1;
-            console.log(`[Auth] User ${user.id} login today. Streak maintained: ${newStreak}`);
-        } else {
-            // Check if yesterday
-            const yesterday = new Date(now);
-            yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-            if (lastLoginStr === yesterdayStr) {
-                // Consecutive day
-                newStreak++;
-                console.log(`[Auth] User ${user.id} consecutive login! Streak: ${user.streak} -> ${newStreak}`);
-            } else {
-                // Missed a day or first login
-                newStreak = 1;
-                console.log(`[Auth] User ${user.id} streak reset (Last: ${lastLoginStr}, Today: ${todayStr}). New: ${newStreak}`);
-            }
-        }
-
-        // Always update last_login. Update streak if changed.
-        try {
-            if (newStreak !== user.streak) {
-                await query('UPDATE users SET streak = $1, last_login = NOW() WHERE id = $2', [newStreak, user.id]);
-                user.streak = newStreak;
-            } else {
-                await query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
-            }
-        } catch (error) {
-            console.error('[Auth] Error updating streak/login stats:', error);
-            // Non-blocking error, but good to know
-        }
+        // Refactored to utility
+        user = await checkAndRefreshStreak(user);
         // ========== END STREAK LOGIC ==========
 
         // Generate Token
@@ -193,7 +156,7 @@ router.post('/sync', async (req: Request, res: Response) => {
 
         // Tenta encontrar por full_name ou email
         let result = await query(
-            'SELECT id, email, full_name, role, streak, score, avatar, level FROM users WHERE LOWER(full_name) = LOWER($1) OR LOWER(email) = LOWER($1)',
+            'SELECT id, email, full_name, role, streak, score, avatar, level, last_login FROM users WHERE LOWER(full_name) = LOWER($1) OR LOWER(email) = LOWER($1)',
             [normalized]
         );
 
@@ -215,6 +178,9 @@ router.post('/sync', async (req: Request, res: Response) => {
             user = result.rows[0];
             console.log(`[Sync] Usuário existente sincronizado: ${normalized}`);
         }
+
+        // Atualiza streak/login
+        if (user) user = await checkAndRefreshStreak(user);
 
         // Gera token (expiração longa para conveniência cross-device)
         const token = jwt.sign(
