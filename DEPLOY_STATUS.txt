@@ -1,13 +1,12 @@
-DEPLOYMENT STATUS: COMPLETED
+DEPLOYMENT STATUS: COMPLETED + THEME UPDATED
 
 Wait for Vercel rebuild (~2 minutes).
 
-Changes Applied:
-1. Admin Panel Simplified: No charts, no stars, only text comments grouped by user.
-2. Deployment Fix: Removed exposed API key from `quiz.ts`.
-3. Ambiguity Fix: Updated legacy `frontend/` folder code just in case Vercel builds from there.
-4. Cleanup: Removed obsolete tests.
+New Changes:
+1. **Theme Sync**: The Admin Panel now uses the main site's Teal/Green theme instead of the custom Orange one.
+2. **Dark/Light Mode**: Fully supported using global CSS variables (`--theme-bg`, `--theme-text`, etc.).
+3. **Consistency**: Buttons, inputs, and cards now match the rest of EcoPlay.
 
 Next Steps:
 - Check your live URL.
-- If you still see the old version, force a rebuild in Vercel dashboard or clear browser cache.
+- Verify that the Admin Panel looks consistent with the home page in both Light and Dark modes.
